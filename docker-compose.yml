@@ -1,0 +1,15 @@
+services:
+  frontend:
+    build: .
+    ports:
+      - "5173:5173"
+    restart: unless-stopped
+    volumes:
+      - .:/app
+      - /app/node_modules
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      - VITE_SUPABASE_URL=${VITE_SUPABASE_URL:-}
+      - VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY:-}
