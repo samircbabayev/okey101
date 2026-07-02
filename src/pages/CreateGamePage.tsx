@@ -17,6 +17,7 @@ import {
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageLayout } from '../components/PageLayout';
+import { az, randomGameName } from '../i18n/az';
 import { createGame } from '../services/gameService';
 import {
   hasLastGameCache,
@@ -44,12 +45,6 @@ const DEFAULT_PLAYERS: PlayerFormRow[] = [
   { name: 'Fuad', teamNumber: 1, turnOrder: 3 },
   { name: 'Samir', teamNumber: 2, turnOrder: 4 },
 ];
-
-function randomGameName(): string {
-  const adjectives = ['Friday', 'Saturday', 'Sunday', 'Epic', 'Classic', 'Wild', 'Late Night', 'Championship'];
-  const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
-  return `${adj} Okey`;
-}
 
 export function CreateGamePage() {
   const navigate = useNavigate();
@@ -122,19 +117,19 @@ export function CreateGamePage() {
   };
 
   const validate = (): string | null => {
-    if (!name.trim()) return 'Game name is required';
+    if (!name.trim()) return az.createGame.errors.nameRequired;
     if (!/^\d+$/.test(totalRounds) || parseInt(totalRounds, 10) < 1) {
-      return 'Total rounds must be a positive integer';
+      return az.createGame.errors.roundsInvalid;
     }
     for (let i = 0; i < players.length; i++) {
       if (!players[i].name.trim()) {
-        return `Player ${i + 1} name is required`;
+        return az.createGame.errors.playerNameRequired(i + 1);
       }
     }
     const turnOrders = players.map((p) => p.turnOrder);
     const uniqueTurns = new Set(turnOrders);
     if (uniqueTurns.size !== turnOrders.length) {
-      return 'Each player must have a unique turn order';
+      return az.createGame.errors.turnOrderUnique;
     }
     return null;
   };
@@ -165,17 +160,14 @@ export function CreateGamePage() {
       saveLastGameCache(input);
       navigate(`/game/${gameId}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create game');
+      setError(err instanceof Error ? err.message : az.createGame.errors.createFailed);
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <PageLayout
-      title="Create New Game"
-      subtitle="Set up teams, players, and round count"
-    >
+    <PageLayout title={az.createGame.title} subtitle={az.createGame.subtitle}>
       <Card maxW="720px" mx="auto">
         <CardBody px={{ base: 3, md: 6 }} py={{ base: 4, md: 6 }}>
           <Box as="form" onSubmit={handleSubmit}>
@@ -192,7 +184,7 @@ export function CreateGamePage() {
                   w={{ base: 'full', sm: 'auto' }}
                   onClick={fillDefaultData}
                 >
-                  Fill Default Data
+                  {az.createGame.fillDefault}
                 </Button>
                 {showLastGameButton && (
                   <Button
@@ -202,23 +194,23 @@ export function CreateGamePage() {
                     w={{ base: 'full', sm: 'auto' }}
                     onClick={fillLastGameData}
                   >
-                    Fill Last Game
+                    {az.createGame.fillLast}
                   </Button>
                 )}
               </Stack>
 
               <FormControl isRequired>
-                <FormLabel>Game Name</FormLabel>
+                <FormLabel>{az.createGame.gameName}</FormLabel>
                 <Input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Friday Night Okey"
+                  placeholder={az.createGame.gameNamePlaceholder}
                 />
               </FormControl>
 
               <SimpleGrid columns={{ base: 1, sm: 3 }} spacing={4}>
                 <FormControl isRequired>
-                  <FormLabel>Team Count</FormLabel>
+                  <FormLabel>{az.createGame.teamCount}</FormLabel>
                   <Select
                     value={teamCount}
                     onChange={(e) => handleTeamCountChange(parseInt(e.target.value, 10))}
@@ -232,7 +224,7 @@ export function CreateGamePage() {
                 </FormControl>
 
                 <FormControl isRequired>
-                  <FormLabel>Total Rounds</FormLabel>
+                  <FormLabel>{az.createGame.totalRounds}</FormLabel>
                   <Input
                     type="number"
                     min={1}
@@ -243,7 +235,7 @@ export function CreateGamePage() {
                 </FormControl>
 
                 <FormControl isRequired>
-                  <FormLabel>Player Count</FormLabel>
+                  <FormLabel>{az.createGame.playerCount}</FormLabel>
                   <Select
                     value={playerCount}
                     onChange={(e) => handlePlayerCountChange(parseInt(e.target.value, 10))}
@@ -259,7 +251,7 @@ export function CreateGamePage() {
 
               <Box>
                 <Text fontWeight="semibold" mb={3}>
-                  Players
+                  {az.createGame.players}
                 </Text>
                 <Stack spacing={3}>
                   {players.map((player, index) => (
@@ -271,23 +263,23 @@ export function CreateGamePage() {
                       bg="gray.50"
                     >
                       <Text fontSize="sm" fontWeight="medium" mb={3}>
-                        Player {index + 1}
+                        {az.createGame.player(index + 1)}
                       </Text>
                       <SimpleGrid columns={{ base: 1, sm: 3 }} spacing={3}>
                         <FormControl isRequired>
-                          <FormLabel fontSize="sm">Name</FormLabel>
+                          <FormLabel fontSize="sm">{az.createGame.name}</FormLabel>
                           <Input
                             size="sm"
                             value={player.name}
                             onChange={(e) =>
                               updatePlayer(index, { name: e.target.value })
                             }
-                            placeholder={`Player ${index + 1}`}
+                            placeholder={az.createGame.player(index + 1)}
                           />
                         </FormControl>
 
                         <FormControl isRequired>
-                          <FormLabel fontSize="sm">Team</FormLabel>
+                          <FormLabel fontSize="sm">{az.scoreboard.team}</FormLabel>
                           <Select
                             size="sm"
                             value={player.teamNumber}
@@ -299,14 +291,14 @@ export function CreateGamePage() {
                           >
                             {teamOptions.map((n) => (
                               <option key={n} value={n}>
-                                Team {n}
+                                {az.common.team(n)}
                               </option>
                             ))}
                           </Select>
                         </FormControl>
 
                         <FormControl isRequired>
-                          <FormLabel fontSize="sm">Turn Order</FormLabel>
+                          <FormLabel fontSize="sm">{az.createGame.turnOrder}</FormLabel>
                           <Select
                             size="sm"
                             value={player.turnOrder}
@@ -345,7 +337,7 @@ export function CreateGamePage() {
                 w="full"
                 isLoading={submitting}
               >
-                Create Game
+                {az.createGame.create}
               </Button>
             </Stack>
           </Box>

@@ -9,6 +9,7 @@ import type {
   TeamTotals,
 } from '../types';
 import { GameStatus } from '../types';
+import { az } from '../i18n/az';
 
 export function calculatePlayerTotals(
   players: Player[],
@@ -41,7 +42,7 @@ export function calculatePlayerTotals(
       playerId: player.id,
       playerName: player.name,
       teamId: player.team_id ?? '',
-      teamName: team?.name ?? 'Unknown',
+      teamName: team?.name ?? az.scoreboard.unknownTeam,
       pointsTotal,
       penaltyTotal,
       grandTotal: pointsTotal + penaltyTotal,

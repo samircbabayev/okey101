@@ -1,5 +1,6 @@
 import { Box, Container, Flex, Heading, Link, Stack, Text } from '@chakra-ui/react';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
+import { az } from '../i18n/az';
 
 interface PageLayoutProps {
   title: string;
@@ -8,8 +9,8 @@ interface PageLayoutProps {
 }
 
 const navLinks = [
-  { to: '/', label: 'Games' },
-  { to: '/create', label: 'New Game' },
+  { to: '/', label: az.nav.games },
+  { to: '/create', label: az.nav.newGame },
 ];
 
 export function PageLayout({ title, subtitle, children }: PageLayoutProps) {
@@ -32,10 +33,10 @@ export function PageLayout({ title, subtitle, children }: PageLayoutProps) {
             <Link as={RouterLink} to="/" _hover={{ textDecoration: 'none' }} minW={0}>
               <Heading size={{ base: 'sm', md: 'md' }} noOfLines={1}>
                 <Text as="span" display={{ base: 'inline', sm: 'none' }}>
-                  101 Okey
+                  {az.appTitle}
                 </Text>
                 <Text as="span" display={{ base: 'none', sm: 'inline' }}>
-                  101 Okey Score Tracker
+                  {az.appTitleFull}
                 </Text>
               </Heading>
             </Link>

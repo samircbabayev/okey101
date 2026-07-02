@@ -7,12 +7,13 @@ import {
   Spinner,
   Text,
 } from '@chakra-ui/react';
+import { az } from '../i18n/az';
 
 interface LoadingStateProps {
   message?: string;
 }
 
-export function LoadingState({ message = 'Loading...' }: LoadingStateProps) {
+export function LoadingState({ message = az.common.loading }: LoadingStateProps) {
   return (
     <Box textAlign="center" py={12}>
       <Spinner size="lg" color="teal.500" mb={4} />
@@ -27,7 +28,7 @@ interface ErrorStateProps {
 }
 
 export function ErrorState({
-  title = 'Something went wrong',
+  title = az.common.errorTitle,
   message,
 }: ErrorStateProps) {
   return (

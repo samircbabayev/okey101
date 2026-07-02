@@ -16,6 +16,7 @@ import {
   Thead,
   Tr,
 } from '@chakra-ui/react';
+import { az } from '../i18n/az';
 import type { Game, PlayerTotals, TeamTotals } from '../types';
 import { GameStatus } from '../types';
 import { getWinningTeam } from '../utils/scoreCalculations';
@@ -29,12 +30,12 @@ interface ScoreboardProps {
 function PlayerScoreCard({ pt }: { pt: PlayerTotals }) {
   return (
     <Box p={3} borderWidth="1px" borderRadius="md" bg="gray.50">
-      <FlexRow label="Player" value={pt.playerName} bold />
-      <FlexRow label="Team" value={pt.teamName} />
+      <FlexRow label={az.scoreboard.player} value={pt.playerName} bold />
+      <FlexRow label={az.scoreboard.team} value={pt.teamName} />
       <SimpleGrid columns={3} spacing={2} mt={2}>
-        <StatCell label="Points" value={pt.pointsTotal} />
-        <StatCell label="Penalty" value={pt.penaltyTotal} />
-        <StatCell label="Total" value={pt.grandTotal} highlight />
+        <StatCell label={az.scoreboard.points} value={pt.pointsTotal} />
+        <StatCell label={az.scoreboard.penalty} value={pt.penaltyTotal} />
+        <StatCell label={az.scoreboard.total} value={pt.grandTotal} highlight />
       </SimpleGrid>
     </Box>
   );
@@ -88,26 +89,24 @@ export function Scoreboard({ playerTotals, teamTotals, gameStatus }: ScoreboardP
   return (
     <Card>
       <CardHeader pb={2} px={{ base: 3, md: 6 }}>
-        <Heading size="md">Scoreboard</Heading>
+        <Heading size="md">{az.scoreboard.title}</Heading>
       </CardHeader>
       <CardBody pt={0} px={{ base: 3, md: 6 }}>
-        {/* Mobile: card layout */}
         <Stack spacing={3} display={{ base: 'flex', md: 'none' }}>
           {playerTotals.map((pt) => (
             <PlayerScoreCard key={pt.playerId} pt={pt} />
           ))}
         </Stack>
 
-        {/* Desktop: table */}
         <Box overflowX="auto" display={{ base: 'none', md: 'block' }}>
           <Table size="sm" variant="simple">
             <Thead>
               <Tr>
-                <Th>Player</Th>
-                <Th>Team</Th>
-                <Th isNumeric>Points</Th>
-                <Th isNumeric>Penalty</Th>
-                <Th isNumeric>Total</Th>
+                <Th>{az.scoreboard.player}</Th>
+                <Th>{az.scoreboard.team}</Th>
+                <Th isNumeric>{az.scoreboard.points}</Th>
+                <Th isNumeric>{az.scoreboard.penalty}</Th>
+                <Th isNumeric>{az.scoreboard.total}</Th>
               </Tr>
             </Thead>
             <Tbody>
@@ -129,7 +128,7 @@ export function Scoreboard({ playerTotals, teamTotals, gameStatus }: ScoreboardP
         <Divider my={5} />
 
         <Heading size="sm" mb={3}>
-          Team Totals
+          {az.scoreboard.teamTotals}
         </Heading>
 
         <Stack spacing={2} display={{ base: 'flex', md: 'none' }}>
@@ -152,8 +151,8 @@ export function Scoreboard({ playerTotals, teamTotals, gameStatus }: ScoreboardP
           <Table size="sm" variant="simple">
             <Thead>
               <Tr>
-                <Th>Team</Th>
-                <Th isNumeric>Grand Total</Th>
+                <Th>{az.scoreboard.team}</Th>
+                <Th isNumeric>{az.scoreboard.grandTotal}</Th>
               </Tr>
             </Thead>
             <Tbody>
@@ -179,13 +178,13 @@ export function Scoreboard({ playerTotals, teamTotals, gameStatus }: ScoreboardP
             borderColor="green.200"
           >
             <Badge colorScheme="green" mb={1}>
-              Winner
+              {az.scoreboard.winner}
             </Badge>
             <Text fontWeight="bold" color="green.700" fontSize={{ base: 'sm', md: 'md' }}>
-              {winner.teamName} — {winner.grandTotal} points
+              {az.scoreboard.winnerPoints(winner.teamName, winner.grandTotal)}
             </Text>
             <Text fontSize="sm" color="green.600">
-              Lowest total wins
+              {az.scoreboard.lowestWins}
             </Text>
           </Box>
         )}

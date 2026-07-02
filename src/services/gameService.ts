@@ -16,7 +16,7 @@ import { getRoundPenaltiesForPlayer } from '../utils/scoreCalculations';
 import { supabase } from './supabaseClient';
 
 function teamNumberFromName(name: string): number {
-  const match = name.match(/^Team (\d+)$/);
+  const match = name.match(/^Komanda (\d+)$/);
   return match ? parseInt(match[1], 10) : 0;
 }
 
@@ -62,7 +62,7 @@ export async function createGame(input: CreateGameInput): Promise<string> {
 
   const teamRows = Array.from({ length: input.teamCount }, (_, i) => ({
     game_id: gameId,
-    name: `Team ${i + 1}`,
+    name: `Komanda ${i + 1}`,
   }));
 
   const { data: teams, error: teamsError } = await supabase

@@ -17,6 +17,7 @@ import {
   Text,
 } from '@chakra-ui/react';
 import { useEffect, useState } from 'react';
+import { az } from '../i18n/az';
 import { finishRound } from '../services/gameService';
 import type { Game, Penalty, Player, Round } from '../types';
 import {
@@ -70,7 +71,7 @@ export function FinishRoundModal({
     for (const player of players) {
       const value = points[player.id] ?? '';
       if (parseIntegerInput(value) === null) {
-        setError(`Enter a valid integer score for ${player.name}`);
+        setError(az.finishRoundModal.errors.scoreRequired(player.name));
         return;
       }
     }
@@ -86,7 +87,7 @@ export function FinishRoundModal({
       onSuccess();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to finish round');
+      setError(err instanceof Error ? err.message : az.finishRoundModal.errors.failed);
     } finally {
       setSubmitting(false);
     }
@@ -97,13 +98,13 @@ export function FinishRoundModal({
       <ModalOverlay />
       <ModalContent mx={{ base: 3, md: 4 }} maxH="90dvh">
         <ModalHeader fontSize={{ base: 'md', md: 'lg' }}>
-          Finish Round {round.round_number}
+          {az.finishRoundModal.title(round.round_number)}
         </ModalHeader>
         <ModalCloseButton />
         <ModalBody pb={2}>
           <Stack spacing={4}>
             <Text fontSize="sm" color="gray.600">
-              Enter points for each player. Penalties for this round are shown for reference.
+              {az.finishRoundModal.hint}
             </Text>
 
             {players.map((player) => {
@@ -131,7 +132,7 @@ export function FinishRoundModal({
                     />
                     {roundPenalty > 0 && (
                       <Text fontSize="xs" color="orange.600" mt={1}>
-                        Round penalties: +{roundPenalty}
+                        {az.finishRoundModal.roundPenalties(roundPenalty)}
                       </Text>
                     )}
                   </FormControl>
@@ -153,7 +154,7 @@ export function FinishRoundModal({
           pb={{ base: 4, md: 6 }}
         >
           <Button variant="ghost" onClick={onClose} w={{ base: 'full', sm: 'auto' }}>
-            Cancel
+            {az.common.cancel}
           </Button>
           <Button
             colorScheme="teal"
@@ -161,7 +162,7 @@ export function FinishRoundModal({
             isLoading={submitting}
             w={{ base: 'full', sm: 'auto' }}
           >
-            Finish Round
+            {az.finishRoundModal.submit}
           </Button>
         </ModalFooter>
       </ModalContent>

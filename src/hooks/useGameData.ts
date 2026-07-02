@@ -27,7 +27,7 @@ export function useGameData(gameId: string | undefined): UseGameDataResult {
       const result = await fetchGameData(gameId);
       setData(result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load game');
+      setError(err instanceof Error ? err.message : 'Oyun yüklənmədi');
     } finally {
       setLoading(false);
     }

@@ -16,6 +16,7 @@ import {
   Textarea,
 } from '@chakra-ui/react';
 import { useState } from 'react';
+import { az } from '../i18n/az';
 import { createPenalty } from '../services/gameService';
 import { PenaltyReason, type Player } from '../types';
 import { PENALTY_REASONS } from '../utils/penaltyLabels';
@@ -60,12 +61,12 @@ export function PenaltyModal({
     setError(null);
 
     if (!playerId) {
-      setError('Please select a player');
+      setError(az.penaltyModal.errors.playerRequired);
       return;
     }
 
     if (!isPositiveInteger(penaltyValue)) {
-      setError('Penalty value must be a positive integer');
+      setError(az.penaltyModal.errors.valueInvalid);
       return;
     }
 
@@ -82,7 +83,7 @@ export function PenaltyModal({
       onSuccess();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add penalty');
+      setError(err instanceof Error ? err.message : az.penaltyModal.errors.failed);
     } finally {
       setSubmitting(false);
     }
@@ -92,14 +93,14 @@ export function PenaltyModal({
     <Modal isOpen={isOpen} onClose={handleClose} isCentered scrollBehavior="inside">
       <ModalOverlay />
       <ModalContent mx={{ base: 3, md: 4 }} maxH="90dvh">
-        <ModalHeader>Add Penalty</ModalHeader>
+        <ModalHeader>{az.penaltyModal.title}</ModalHeader>
         <ModalCloseButton />
         <ModalBody pb={6}>
           <Stack spacing={4}>
             <FormControl isRequired isInvalid={!!error && !playerId}>
-              <FormLabel>Player</FormLabel>
+              <FormLabel>{az.penaltyModal.player}</FormLabel>
               <Select
-                placeholder="Select player"
+                placeholder={az.penaltyModal.selectPlayer}
                 value={playerId}
                 onChange={(e) => setPlayerId(e.target.value)}
               >
@@ -112,19 +113,19 @@ export function PenaltyModal({
             </FormControl>
 
             <FormControl isRequired isInvalid={!!error && !isPositiveInteger(penaltyValue)}>
-              <FormLabel>Penalty Value</FormLabel>
+              <FormLabel>{az.penaltyModal.value}</FormLabel>
               <Input
                 type="number"
                 min={1}
                 step={1}
                 value={penaltyValue}
                 onChange={(e) => setPenaltyValue(e.target.value)}
-                placeholder="e.g. 101"
+                placeholder={az.penaltyModal.valuePlaceholder}
               />
             </FormControl>
 
             <FormControl isRequired>
-              <FormLabel>Reason</FormLabel>
+              <FormLabel>{az.penaltyModal.reason}</FormLabel>
               <Select
                 value={reason}
                 onChange={(e) => setReason(e.target.value as PenaltyReason)}
@@ -138,11 +139,11 @@ export function PenaltyModal({
             </FormControl>
 
             <FormControl>
-              <FormLabel>Note (optional)</FormLabel>
+              <FormLabel>{az.penaltyModal.note}</FormLabel>
               <Textarea
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
-                placeholder="Additional details..."
+                placeholder={az.penaltyModal.notePlaceholder}
                 rows={2}
               />
             </FormControl>
@@ -160,7 +161,7 @@ export function PenaltyModal({
           pb={{ base: 4, md: 6 }}
         >
           <Button variant="ghost" onClick={handleClose} w={{ base: 'full', sm: 'auto' }}>
-            Cancel
+            {az.common.cancel}
           </Button>
           <Button
             colorScheme="teal"
@@ -168,7 +169,7 @@ export function PenaltyModal({
             isLoading={submitting}
             w={{ base: 'full', sm: 'auto' }}
           >
-            Add Penalty
+            {az.penaltyModal.submit}
           </Button>
         </ModalFooter>
       </ModalContent>

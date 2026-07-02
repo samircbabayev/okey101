@@ -10,6 +10,7 @@ import {
 } from '@chakra-ui/react';
 import type { Game, Player, Round, Team } from '../types';
 import { GameStatus } from '../types';
+import { az, gameStatusLabel } from '../i18n/az';
 import { getCurrentRoundNumber } from '../utils/scoreCalculations';
 
 interface GameInfoCardProps {
@@ -38,7 +39,7 @@ export function GameInfoCard({ game, teams, players, rounds }: GameInfoCardProps
             {game.name}
           </Heading>
           <Badge colorScheme={statusColor} fontSize="sm" flexShrink={0}>
-            {game.status}
+            {gameStatusLabel(game.status)}
           </Badge>
         </Box>
       </CardHeader>
@@ -46,21 +47,21 @@ export function GameInfoCard({ game, teams, players, rounds }: GameInfoCardProps
         <SimpleGrid columns={{ base: 1, sm: 2, md: 4 }} spacing={4}>
           <Box>
             <Text fontSize="xs" color="gray.500" textTransform="uppercase">
-              Total Rounds
+              {az.gameInfo.totalRounds}
             </Text>
             <Text fontWeight="semibold">{game.total_rounds}</Text>
           </Box>
           <Box>
             <Text fontSize="xs" color="gray.500" textTransform="uppercase">
-              Current Round
+              {az.gameInfo.currentRound}
             </Text>
             <Text fontWeight="semibold">
-              {currentRound === 0 ? 'Not started' : currentRound}
+              {currentRound === 0 ? az.gameInfo.notStarted : currentRound}
             </Text>
           </Box>
           <Box>
             <Text fontSize="xs" color="gray.500" textTransform="uppercase">
-              Teams
+              {az.gameInfo.teams}
             </Text>
             <Text fontWeight="semibold" fontSize={{ base: 'sm', md: 'md' }}>
               {teams.map((t) => t.name).join(', ')}
@@ -68,7 +69,7 @@ export function GameInfoCard({ game, teams, players, rounds }: GameInfoCardProps
           </Box>
           <Box>
             <Text fontSize="xs" color="gray.500" textTransform="uppercase">
-              Players
+              {az.gameInfo.players}
             </Text>
             <Text fontWeight="semibold" fontSize={{ base: 'sm', md: 'md' }}>
               {sortedPlayers.map((p) => p.name).join(', ')}

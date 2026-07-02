@@ -22,7 +22,7 @@ export function useGames(): UseGamesResult {
       const result = await fetchGames();
       setGames(result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load games');
+      setError(err instanceof Error ? err.message : 'Oyunlar yüklənmədi');
     } finally {
       setLoading(false);
     }

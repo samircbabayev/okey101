@@ -25,6 +25,7 @@ import { PenaltyModal } from '../components/PenaltyModal';
 import { RoundHistory } from '../components/RoundHistory';
 import { Scoreboard } from '../components/Scoreboard';
 import { useGameData } from '../hooks/useGameData';
+import { az } from '../i18n/az';
 import { finishGame, startRound } from '../services/gameService';
 import { GameStatus } from '../types';
 import {
@@ -48,16 +49,16 @@ export function GamePage() {
 
   if (loading) {
     return (
-      <PageLayout title="Game">
-        <LoadingState message="Loading game..." />
+      <PageLayout title={az.game.title}>
+        <LoadingState message={az.game.loading} />
       </PageLayout>
     );
   }
 
   if (error || !data) {
     return (
-      <PageLayout title="Game">
-        <ErrorState message={error ?? 'Game not found'} />
+      <PageLayout title={az.game.title}>
+        <ErrorState message={error ?? az.game.notFound} />
       </PageLayout>
     );
   }
@@ -73,15 +74,15 @@ export function GamePage() {
     try {
       await startRound(game, players, rounds);
       toast({
-        title: 'Round started',
+        title: az.game.toasts.roundStarted,
         status: 'success',
         duration: 3000,
       });
       await refetch();
     } catch (err) {
       toast({
-        title: 'Could not start round',
-        description: err instanceof Error ? err.message : 'Unknown error',
+        title: az.game.toasts.roundStartFailed,
+        description: err instanceof Error ? err.message : az.common.unknown,
         status: 'error',
         duration: 5000,
       });
@@ -97,7 +98,7 @@ export function GamePage() {
   const handleFinishGame = async () => {
     if (activeRound) {
       toast({
-        title: 'Finish the current round first',
+        title: az.game.toasts.finishRoundFirst,
         status: 'warning',
         duration: 4000,
       });
@@ -109,15 +110,15 @@ export function GamePage() {
       await finishGame(game.id);
       finishGameDialog.onClose();
       toast({
-        title: 'Game finished',
+        title: az.game.toasts.gameFinished,
         status: 'success',
         duration: 3000,
       });
       await refetch();
     } catch (err) {
       toast({
-        title: 'Could not finish game',
-        description: err instanceof Error ? err.message : 'Unknown error',
+        title: az.game.toasts.gameFinishFailed,
+        description: err instanceof Error ? err.message : az.common.unknown,
         status: 'error',
         duration: 5000,
       });
@@ -131,7 +132,7 @@ export function GamePage() {
     : null;
 
   return (
-    <PageLayout title={game.name} subtitle="Track scores and rounds">
+    <PageLayout title={game.name} subtitle={az.game.subtitle}>
       <Stack spacing={6}>
         <GameInfoCard game={game} teams={teams} players={players} rounds={rounds} />
 
@@ -140,10 +141,10 @@ export function GamePage() {
             <AlertIcon />
             <Box>
               <Text fontWeight="semibold">
-                Round {activeRound.round_number} in progress
+                {az.game.roundInProgress(activeRound.round_number)}
               </Text>
               {starterName && (
-                <Text fontSize="sm">Starting player: {starterName}</Text>
+                <Text fontSize="sm">{az.game.startingPlayer(starterName)}</Text>
               )}
             </Box>
           </Alert>
@@ -159,7 +160,7 @@ export function GamePage() {
               size={{ base: 'sm', md: 'md' }}
               w="full"
             >
-              Start Round
+              {az.game.startRound}
             </Button>
             <Button
               colorScheme="orange"
@@ -169,7 +170,7 @@ export function GamePage() {
               size={{ base: 'sm', md: 'md' }}
               w="full"
             >
-              Add Penalty
+              {az.game.addPenalty}
             </Button>
             <Button
               colorScheme="purple"
@@ -179,7 +180,7 @@ export function GamePage() {
               size={{ base: 'sm', md: 'md' }}
               w="full"
             >
-              Finish Round
+              {az.game.finishRound}
             </Button>
             <Button
               colorScheme="red"
@@ -189,7 +190,7 @@ export function GamePage() {
               size={{ base: 'sm', md: 'md' }}
               w="full"
             >
-              Finish Game
+              {az.game.finishGame}
             </Button>
           </SimpleGrid>
         )}
@@ -197,7 +198,7 @@ export function GamePage() {
         {game.status === GameStatus.Finished && (
           <Alert status="success" borderRadius="md">
             <AlertIcon />
-            Game finished — view final scores below.
+            {az.game.gameFinished}
           </Alert>
         )}
 
@@ -246,18 +247,17 @@ export function GamePage() {
         <AlertDialogOverlay>
           <AlertDialogContent mx={{ base: 3, md: 4 }} maxW="md">
             <AlertDialogHeader fontSize={{ base: 'md', md: 'lg' }}>
-              Finish Game
+              {az.game.finishGameTitle}
             </AlertDialogHeader>
             <AlertDialogBody fontSize={{ base: 'sm', md: 'md' }}>
-              End this game now? The winner will be determined from current scores.
-              This cannot be undone.
+              {az.game.finishGameBody}
             </AlertDialogBody>
             <AlertDialogFooter
               flexDirection={{ base: 'column-reverse', sm: 'row' }}
               gap={2}
             >
               <Button ref={cancelRef} onClick={finishGameDialog.onClose} w={{ base: 'full', sm: 'auto' }}>
-                Cancel
+                {az.common.cancel}
               </Button>
               <Button
                 colorScheme="red"
@@ -265,7 +265,7 @@ export function GamePage() {
                 isLoading={finishGameLoading}
                 w={{ base: 'full', sm: 'auto' }}
               >
-                Finish Game
+                {az.game.finishGame}
               </Button>
             </AlertDialogFooter>
           </AlertDialogContent>

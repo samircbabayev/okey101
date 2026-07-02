@@ -12,35 +12,36 @@ import { Link as RouterLink } from 'react-router-dom';
 import { ErrorState, LoadingState } from '../components/LoadingState';
 import { PageLayout } from '../components/PageLayout';
 import { useGames } from '../hooks/useGames';
+import { az, gameStatusLabel } from '../i18n/az';
 import { GameStatus, type GameListItem } from '../types';
 
 function getProgressLabel(item: GameListItem): string {
   const { game, finishedRoundCount, hasActiveRound } = item;
 
   if (game.status === GameStatus.Finished) {
-    return `${game.total_rounds}/${game.total_rounds} rounds completed`;
+    return az.gameList.roundsCompleted(game.total_rounds, game.total_rounds);
   }
 
   if (hasActiveRound) {
-    return `Round ${finishedRoundCount + 1} in progress`;
+    return az.gameList.roundInProgress(finishedRoundCount + 1);
   }
 
   if (finishedRoundCount === 0) {
-    return 'Not started';
+    return az.gameList.notStarted;
   }
 
-  return `${finishedRoundCount}/${game.total_rounds} rounds completed`;
+  return az.gameList.roundsCompleted(finishedRoundCount, game.total_rounds);
 }
 
 function getActionLabel(item: GameListItem): string {
   if (item.game.status === GameStatus.Finished) {
-    return 'View results';
+    return az.gameList.viewResults;
   }
-  return 'Continue game';
+  return az.gameList.continueGame;
 }
 
 function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString(undefined, {
+  return new Date(dateStr).toLocaleDateString('az-AZ', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
@@ -52,30 +53,30 @@ export function GameListPage() {
 
   if (loading) {
     return (
-      <PageLayout title="Games" subtitle="Your Okey score tracking sessions">
-        <LoadingState message="Loading games..." />
+      <PageLayout title={az.gameList.title} subtitle={az.gameList.subtitle}>
+        <LoadingState message={az.gameList.loading} />
       </PageLayout>
     );
   }
 
   if (error) {
     return (
-      <PageLayout title="Games" subtitle="Your Okey score tracking sessions">
+      <PageLayout title={az.gameList.title} subtitle={az.gameList.subtitle}>
         <ErrorState message={error} />
       </PageLayout>
     );
   }
 
   return (
-    <PageLayout title="Games" subtitle="Your Okey score tracking sessions">
+    <PageLayout title={az.gameList.title} subtitle={az.gameList.subtitle}>
       {games.length === 0 ? (
         <Card>
           <CardBody textAlign="center" py={10}>
             <Text color="gray.600" mb={4}>
-              No games yet. Create your first game to start tracking scores.
+              {az.gameList.empty}
             </Text>
             <Button as={RouterLink} to="/create" colorScheme="teal">
-              Create Game
+              {az.gameList.createGame}
             </Button>
           </CardBody>
         </Card>
@@ -100,12 +101,12 @@ export function GameListPage() {
                           item.game.status === GameStatus.Finished ? 'green' : 'blue'
                         }
                       >
-                        {item.game.status}
+                        {gameStatusLabel(item.game.status)}
                       </Badge>
                     </Flex>
                     <Text fontSize="sm" color="gray.600" lineHeight="tall">
-                      {item.game.team_count} teams · {item.game.total_rounds} rounds ·{' '}
-                      {formatDate(item.game.created_at)}
+                      {item.game.team_count} {az.gameList.teams} · {item.game.total_rounds}{' '}
+                      {az.gameList.rounds} · {formatDate(item.game.created_at)}
                     </Text>
                     <Text fontSize="sm" color="gray.500" mt={1}>
                       {getProgressLabel(item)}
