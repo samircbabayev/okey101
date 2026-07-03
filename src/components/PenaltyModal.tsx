@@ -39,7 +39,7 @@ export function PenaltyModal({
 }: PenaltyModalProps) {
   const [playerId, setPlayerId] = useState('');
   const [penaltyValue, setPenaltyValue] = useState('');
-  const [reason, setReason] = useState<PenaltyReason>(PenaltyReason.FalseDiscard);
+  const [reason, setReason] = useState<PenaltyReason>(PenaltyReason.Other);
   const [note, setNote] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -47,7 +47,7 @@ export function PenaltyModal({
   const resetForm = () => {
     setPlayerId('');
     setPenaltyValue('');
-    setReason(PenaltyReason.FalseDiscard);
+    setReason(PenaltyReason.Other);
     setNote('');
     setError(null);
   };

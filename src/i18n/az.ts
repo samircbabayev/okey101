@@ -51,6 +51,8 @@ export const az = {
     player: (n: number) => `Oyunçu ${n}`,
     name: 'Ad',
     turnOrder: 'Növbə',
+    startFirst: 'Birinci başla',
+    startsFirst: 'Birinci başlayır',
     create: 'Oyun yarat',
     errors: {
       nameRequired: 'Oyun adı vacibdir',

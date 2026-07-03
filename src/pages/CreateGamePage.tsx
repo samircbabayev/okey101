@@ -1,10 +1,12 @@
 import {
   Alert,
   AlertIcon,
+  Badge,
   Box,
   Button,
   Card,
   CardBody,
+  Flex,
   FormControl,
   FormErrorMessage,
   FormLabel,
@@ -87,6 +89,21 @@ export function CreateGamePage() {
     setPlayers((prev) =>
       prev.map((p, i) => (i === index ? { ...p, ...updates } : p)),
     );
+  };
+
+  const setPlayerStartFirst = (index: number) => {
+    setPlayers((prev) => {
+      const others = prev
+        .map((p, i) => ({ ...p, i }))
+        .filter((item) => item.i !== index)
+        .sort((a, b) => a.turnOrder - b.turnOrder);
+
+      return prev.map((p, i) => {
+        if (i === index) return { ...p, turnOrder: 1 };
+        const pos = others.findIndex((o) => o.i === i);
+        return { ...p, turnOrder: pos + 2 };
+      });
+    });
   };
 
   const fillDefaultData = () => {
@@ -262,9 +279,24 @@ export function CreateGamePage() {
                       borderRadius="md"
                       bg="gray.50"
                     >
-                      <Text fontSize="sm" fontWeight="medium" mb={3}>
-                        {az.createGame.player(index + 1)}
-                      </Text>
+                      <Flex justify="space-between" align="center" mb={3} gap={2} flexWrap="wrap">
+                        <Text fontSize="sm" fontWeight="medium">
+                          {az.createGame.player(index + 1)}
+                        </Text>
+                        {player.turnOrder === 1 ? (
+                          <Badge colorScheme="teal">{az.createGame.startsFirst}</Badge>
+                        ) : (
+                          <Button
+                            type="button"
+                            size="xs"
+                            variant="outline"
+                            colorScheme="teal"
+                            onClick={() => setPlayerStartFirst(index)}
+                          >
+                            {az.createGame.startFirst}
+                          </Button>
+                        )}
+                      </Flex>
                       <SimpleGrid columns={{ base: 1, sm: 3 }} spacing={3}>
                         <FormControl isRequired>
                           <FormLabel fontSize="sm">{az.createGame.name}</FormLabel>
