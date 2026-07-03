@@ -5,15 +5,26 @@ import {
   Card,
   CardBody,
   Flex,
+  FormControl,
+  FormLabel,
+  Input,
   Stack,
   Text,
 } from '@chakra-ui/react';
+import { useMemo, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import { ErrorState, LoadingState } from '../components/LoadingState';
 import { PageLayout } from '../components/PageLayout';
 import { useGames } from '../hooks/useGames';
 import { az, gameStatusLabel } from '../i18n/az';
 import { GameStatus, type GameListItem } from '../types';
+
+function toDateInputValue(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
 
 function getProgressLabel(item: GameListItem): string {
   const { game, finishedRoundCount, hasActiveRound } = item;
@@ -50,6 +61,16 @@ function formatDate(dateStr: string): string {
 
 export function GameListPage() {
   const { games, loading, error } = useGames();
+  const [dateFilter, setDateFilter] = useState<string>(() =>
+    toDateInputValue(new Date()),
+  );
+
+  const filteredGames = useMemo(() => {
+    if (!dateFilter) return games;
+    return games.filter(
+      (item) => toDateInputValue(new Date(item.game.created_at)) === dateFilter,
+    );
+  }, [games, dateFilter]);
 
   if (loading) {
     return (
@@ -67,6 +88,34 @@ export function GameListPage() {
     );
   }
 
+  const filterBar = games.length > 0 && (
+    <Flex
+      gap={3}
+      mb={4}
+      align={{ base: 'stretch', sm: 'flex-end' }}
+      direction={{ base: 'column', sm: 'row' }}
+    >
+      <FormControl maxW={{ sm: '220px' }}>
+        <FormLabel fontSize="sm" mb={1}>
+          {az.gameList.filterDate}
+        </FormLabel>
+        <Input
+          type="date"
+          value={dateFilter}
+          onChange={(e) => setDateFilter(e.target.value)}
+        />
+      </FormControl>
+      <Button
+        variant="outline"
+        onClick={() => setDateFilter('')}
+        isDisabled={!dateFilter}
+        w={{ base: 'full', sm: 'auto' }}
+      >
+        {az.gameList.allDates}
+      </Button>
+    </Flex>
+  );
+
   return (
     <PageLayout title={az.gameList.title} subtitle={az.gameList.subtitle}>
       {games.length === 0 ? (
@@ -81,8 +130,17 @@ export function GameListPage() {
           </CardBody>
         </Card>
       ) : (
-        <Stack spacing={3}>
-          {games.map((item) => (
+        <>
+          {filterBar}
+          {filteredGames.length === 0 ? (
+            <Card>
+              <CardBody textAlign="center" py={10}>
+                <Text color="gray.600">{az.gameList.noGamesForDate}</Text>
+              </CardBody>
+            </Card>
+          ) : (
+            <Stack spacing={3}>
+              {filteredGames.map((item) => (
             <Card key={item.game.id}>
               <CardBody px={{ base: 3, md: 6 }} py={{ base: 4, md: 6 }}>
                 <Flex
@@ -111,6 +169,30 @@ export function GameListPage() {
                     <Text fontSize="sm" color="gray.500" mt={1}>
                       {getProgressLabel(item)}
                     </Text>
+                    {item.game.status === GameStatus.Finished &&
+                      item.winnerTeamName && (
+                        <Flex align="center" gap={2} mt={2} flexWrap="wrap">
+                          <Badge colorScheme="yellow">
+                            {az.gameList.winner}
+                          </Badge>
+                          <Text fontSize="sm" fontWeight="medium">
+                            {item.winnerTeamName}
+                          </Text>
+                          {item.winnerPlayerNames.length > 0 && (
+                            <Text fontSize="sm" color="gray.600">
+                              ({item.winnerPlayerNames.join(', ')})
+                            </Text>
+                          )}
+                        </Flex>
+                      )}
+                    {item.game.status === GameStatus.Finished && item.isDraw && (
+                      <Flex align="center" gap={2} mt={2} flexWrap="wrap">
+                        <Badge colorScheme="yellow">{az.scoreboard.draw}</Badge>
+                        <Text fontSize="sm" color="gray.600">
+                          {az.scoreboard.drawHint}
+                        </Text>
+                      </Flex>
+                    )}
                   </Box>
                   <Button
                     as={RouterLink}
@@ -126,8 +208,10 @@ export function GameListPage() {
                 </Flex>
               </CardBody>
             </Card>
-          ))}
-        </Stack>
+              ))}
+            </Stack>
+          )}
+        </>
       )}
     </PageLayout>
   );

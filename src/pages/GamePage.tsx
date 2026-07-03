@@ -9,6 +9,9 @@ import {
   AlertIcon,
   Box,
   Button,
+  FormControl,
+  FormLabel,
+  Select,
   SimpleGrid,
   Stack,
   Text,
@@ -17,6 +20,7 @@ import {
 } from '@chakra-ui/react';
 import { useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { ActiveRoundPenalties } from '../components/ActiveRoundPenalties';
 import { FinishRoundModal } from '../components/FinishRoundModal';
 import { GameInfoCard } from '../components/GameInfoCard';
 import { ErrorState, LoadingState } from '../components/LoadingState';
@@ -41,6 +45,7 @@ export function GamePage() {
   const toast = useToast();
   const [actionLoading, setActionLoading] = useState(false);
   const [finishGameLoading, setFinishGameLoading] = useState(false);
+  const [winnerTeamId, setWinnerTeamId] = useState('');
 
   const penaltyModal = useDisclosure();
   const finishModal = useDisclosure();
@@ -95,19 +100,15 @@ export function GamePage() {
     await refetch();
   };
 
-  const handleFinishGame = async () => {
-    if (activeRound) {
-      toast({
-        title: az.game.toasts.finishRoundFirst,
-        status: 'warning',
-        duration: 4000,
-      });
-      return;
-    }
+  const openFinishGameDialog = () => {
+    setWinnerTeamId('');
+    finishGameDialog.onOpen();
+  };
 
+  const handleFinishGame = async () => {
     setFinishGameLoading(true);
     try {
-      await finishGame(game.id);
+      await finishGame(game.id, winnerTeamId || null);
       finishGameDialog.onClose();
       toast({
         title: az.game.toasts.gameFinished,
@@ -132,7 +133,7 @@ export function GamePage() {
     : null;
 
   return (
-    <PageLayout title={game.name} subtitle={az.game.subtitle}>
+    <PageLayout>
       <Stack spacing={6}>
         <GameInfoCard game={game} teams={teams} players={players} rounds={rounds} />
 
@@ -140,11 +141,13 @@ export function GamePage() {
           <Alert status="info" borderRadius="md">
             <AlertIcon />
             <Box>
-              <Text fontWeight="semibold">
+              <Text fontWeight="bold" fontSize={{ base: 'lg', md: 'xl' }}>
                 {az.game.roundInProgress(activeRound.round_number)}
               </Text>
               {starterName && (
-                <Text fontSize="sm">{az.game.startingPlayer(starterName)}</Text>
+                <Text fontSize={{ base: 'md', md: 'lg' }}>
+                  {az.game.startingPlayer(starterName)}
+                </Text>
               )}
             </Box>
           </Alert>
@@ -185,14 +188,22 @@ export function GamePage() {
             <Button
               colorScheme="red"
               variant="outline"
-              onClick={finishGameDialog.onOpen}
-              isDisabled={!!activeRound}
+              onClick={openFinishGameDialog}
               size={{ base: 'sm', md: 'md' }}
               w="full"
             >
               {az.game.finishGame}
             </Button>
           </SimpleGrid>
+        )}
+
+        {activeRound && (
+          <ActiveRoundPenalties
+            roundId={activeRound.id}
+            roundNumber={activeRound.round_number}
+            players={players}
+            penalties={penalties}
+          />
         )}
 
         {game.status === GameStatus.Finished && (
@@ -206,7 +217,7 @@ export function GamePage() {
           <Scoreboard
             playerTotals={playerTotals}
             teamTotals={teamTotals}
-            gameStatus={game.status}
+            game={game}
           />
           <RoundHistory
             rounds={rounds}
@@ -250,7 +261,31 @@ export function GamePage() {
               {az.game.finishGameTitle}
             </AlertDialogHeader>
             <AlertDialogBody fontSize={{ base: 'sm', md: 'md' }}>
-              {az.game.finishGameBody}
+              <Text mb={3}>{az.game.finishGameBody}</Text>
+              <FormControl>
+                <FormLabel fontSize={{ base: 'md', md: 'lg' }} fontWeight="bold" mb={2}>
+                  {az.game.finishGameWinnerLabel}
+                </FormLabel>
+                <Select
+                  value={winnerTeamId}
+                  onChange={(e) => setWinnerTeamId(e.target.value)}
+                >
+                  <option value="">{az.game.finishGameWinnerAuto}</option>
+                  {teams.map((team) => {
+                    const teamPlayers = players
+                      .filter((p) => p.team_id === team.id)
+                      .sort((a, b) => a.turn_order - b.turn_order)
+                      .map((p) => p.name)
+                      .join(', ');
+                    return (
+                      <option key={team.id} value={team.id}>
+                        {team.name}
+                        {teamPlayers ? ` (${teamPlayers})` : ''}
+                      </option>
+                    );
+                  })}
+                </Select>
+              </FormControl>
             </AlertDialogBody>
             <AlertDialogFooter
               flexDirection={{ base: 'column-reverse', sm: 'row' }}

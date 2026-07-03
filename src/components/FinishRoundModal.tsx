@@ -26,6 +26,8 @@ import {
   parseIntegerInput,
 } from '../utils/scoreCalculations';
 
+const DEFAULT_ROUND_POINTS = '202';
+
 interface FinishRoundModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -53,7 +55,7 @@ export function FinishRoundModal({
     if (isOpen) {
       const initial: Record<string, string> = {};
       for (const p of players) {
-        initial[p.id] = '';
+        initial[p.id] = DEFAULT_ROUND_POINTS;
       }
       setPoints(initial);
       setError(null);

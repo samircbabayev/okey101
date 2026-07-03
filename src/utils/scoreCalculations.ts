@@ -74,7 +74,33 @@ export function calculateTeamTotals(playerTotals: PlayerTotals[]): TeamTotals[] 
 
 export function getWinningTeam(teamTotals: TeamTotals[]): TeamTotals | null {
   if (teamTotals.length === 0) return null;
-  return teamTotals.reduce((min, t) => (t.grandTotal < min.grandTotal ? t : min));
+  const lowestScore = Math.min(...teamTotals.map((t) => t.grandTotal));
+  const lowestTeams = teamTotals.filter((t) => t.grandTotal === lowestScore);
+  return lowestTeams.length === 1 ? lowestTeams[0] : null;
+}
+
+export function isTiedGame(
+  game: Pick<Game, 'status' | 'winner_team_id'>,
+  teamTotals: TeamTotals[],
+): boolean {
+  if (game.status !== GameStatus.Finished) return false;
+  if (game.winner_team_id) return false;
+  if (teamTotals.length < 2) return false;
+  return getWinningTeam(teamTotals) === null;
+}
+
+export function resolveWinningTeam(
+  game: Pick<Game, 'status' | 'winner_team_id'>,
+  teamTotals: TeamTotals[],
+): TeamTotals | null {
+  if (game.status !== GameStatus.Finished) return null;
+  if (game.winner_team_id) {
+    return (
+      teamTotals.find((t) => t.teamId === game.winner_team_id) ??
+      getWinningTeam(teamTotals)
+    );
+  }
+  return getWinningTeam(teamTotals);
 }
 
 export function getActiveRound(rounds: Round[]): Round | undefined {

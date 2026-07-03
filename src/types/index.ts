@@ -17,6 +17,7 @@ export interface Game {
   team_count: number;
   total_rounds: number;
   status: GameStatus;
+  winner_team_id: string | null;
   created_at: string;
 }
 
@@ -116,4 +117,26 @@ export interface GameListItem {
   game: Game;
   finishedRoundCount: number;
   hasActiveRound: boolean;
+  winnerTeamName: string | null;
+  winnerPlayerNames: string[];
+  isDraw: boolean;
+}
+
+export interface PlayerDayStats {
+  name: string;
+  gamesPlayed: number;
+  finishedGames: number;
+  wins: number;
+  winRate: number;
+  pointsTotal: number;
+  penaltyTotal: number;
+  grandTotal: number;
+  avgScore: number;
+  penaltyCount: number;
+  penaltyByReason: Record<PenaltyReason, number>;
+  maxSinglePenalty: number;
+  roundsPlayed: number;
+  timesStartedFirst: number;
+  bestGame: number | null;
+  worstGame: number | null;
 }

@@ -12,7 +12,14 @@ import type {
   Team,
 } from '../types';
 import { GameStatus } from '../types';
-import { getRoundPenaltiesForPlayer } from '../utils/scoreCalculations';
+import { az } from '../i18n/az';
+import {
+  calculatePlayerTotals,
+  calculateTeamTotals,
+  getRoundPenaltiesForPlayer,
+  isTiedGame,
+  resolveWinningTeam,
+} from '../utils/scoreCalculations';
 import { supabase } from './supabaseClient';
 
 function teamNumberFromName(name: string): number {
@@ -20,25 +27,209 @@ function teamNumberFromName(name: string): number {
   return match ? parseInt(match[1], 10) : 0;
 }
 
+function todayRange(): { start: Date; end: Date } {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const end = new Date(start);
+  end.setDate(end.getDate() + 1);
+  return { start, end };
+}
+
+export async function getNextGameNameForToday(): Promise<string> {
+  const { start, end } = todayRange();
+  const { count, error } = await supabase
+    .from('games')
+    .select('*', { count: 'exact', head: true })
+    .gte('created_at', start.toISOString())
+    .lt('created_at', end.toISOString());
+
+  if (error) throw error;
+
+  return az.createGame.gameNumber((count ?? 0) + 1);
+}
+
 interface GameWithRounds extends Game {
-  rounds: Pick<Round, 'is_finished'>[];
+  rounds: Pick<Round, 'id' | 'is_finished'>[];
+}
+
+interface WinnerInfo {
+  teamName: string | null;
+  playerNames: string[];
+  isDraw: boolean;
 }
 
 export async function fetchGames(): Promise<GameListItem[]> {
   const { data, error } = await supabase
     .from('games')
-    .select('*, rounds(is_finished)')
+    .select('*, rounds(id, is_finished)')
     .order('created_at', { ascending: false });
 
   if (error) throw error;
 
-  return ((data ?? []) as GameWithRounds[]).map((row) => {
+  const rows = (data ?? []) as GameWithRounds[];
+  const winnerByGameId = await computeWinners(rows);
+
+  return rows.map((row) => {
     const { rounds, ...game } = row;
     const roundList = rounds ?? [];
+    const winner = winnerByGameId.get(row.id);
     return {
       game: game as Game,
       finishedRoundCount: roundList.filter((r) => r.is_finished).length,
       hasActiveRound: roundList.some((r) => !r.is_finished),
+      winnerTeamName: winner?.teamName ?? null,
+      winnerPlayerNames: winner?.playerNames ?? [],
+      isDraw: winner?.isDraw ?? false,
+    };
+  });
+}
+
+async function computeWinners(
+  rows: GameWithRounds[],
+): Promise<Map<string, WinnerInfo>> {
+  const winnerByGameId = new Map<string, WinnerInfo>();
+  const finishedRows = rows.filter((r) => r.status === GameStatus.Finished);
+  if (finishedRows.length === 0) return winnerByGameId;
+
+  const finishedGameIds = finishedRows.map((r) => r.id);
+  const finishedRoundIds = finishedRows.flatMap((r) =>
+    (r.rounds ?? []).map((rd) => rd.id),
+  );
+
+  const [teamsRes, playersRes] = await Promise.all([
+    supabase.from('teams').select('*').in('game_id', finishedGameIds),
+    supabase.from('players').select('*').in('game_id', finishedGameIds),
+  ]);
+
+  if (teamsRes.error) throw teamsRes.error;
+  if (playersRes.error) throw playersRes.error;
+
+  let scores: Score[] = [];
+  let penalties: Penalty[] = [];
+
+  if (finishedRoundIds.length > 0) {
+    const [scoresRes, penaltiesRes] = await Promise.all([
+      supabase.from('scores').select('*').in('round_id', finishedRoundIds),
+      supabase.from('penalties').select('*').in('round_id', finishedRoundIds),
+    ]);
+
+    if (scoresRes.error) throw scoresRes.error;
+    if (penaltiesRes.error) throw penaltiesRes.error;
+
+    scores = (scoresRes.data ?? []) as Score[];
+    penalties = (penaltiesRes.data ?? []) as Penalty[];
+  }
+
+  const allTeams = (teamsRes.data ?? []) as Team[];
+  const allPlayers = (playersRes.data ?? []) as Player[];
+
+  for (const row of finishedRows) {
+    const gameTeams = allTeams.filter((t) => t.game_id === row.id);
+    const gamePlayers = allPlayers.filter((p) => p.game_id === row.id);
+    const roundIds = new Set((row.rounds ?? []).map((rd) => rd.id));
+    const gameScores = scores.filter((s) => roundIds.has(s.round_id));
+    const gamePenalties = penalties.filter((p) => roundIds.has(p.round_id));
+    const gameRounds: Round[] = (row.rounds ?? []).map((rd) => ({
+      id: rd.id,
+      game_id: row.id,
+      round_number: 0,
+      started_by_player_id: null,
+      is_finished: rd.is_finished,
+      created_at: '',
+    }));
+
+    const playerTotals = calculatePlayerTotals(
+      gamePlayers,
+      gameTeams,
+      gameScores,
+      gamePenalties,
+      gameRounds,
+    );
+    const teamTotals = calculateTeamTotals(playerTotals);
+    const winner = resolveWinningTeam(row, teamTotals);
+
+    if (winner) {
+      winnerByGameId.set(row.id, {
+        teamName: winner.teamName,
+        playerNames: playerTotals
+          .filter((pt) => pt.teamId === winner.teamId)
+          .map((pt) => pt.playerName)
+          .sort((a, b) => a.localeCompare(b)),
+        isDraw: false,
+      });
+    } else if (isTiedGame(row, teamTotals)) {
+      winnerByGameId.set(row.id, {
+        teamName: null,
+        playerNames: [],
+        isDraw: true,
+      });
+    }
+  }
+
+  return winnerByGameId;
+}
+
+export async function fetchDailyGameData(date: string): Promise<GameData[]> {
+  const start = new Date(`${date}T00:00:00`);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 1);
+
+  const { data: games, error: gamesError } = await supabase
+    .from('games')
+    .select('*')
+    .gte('created_at', start.toISOString())
+    .lt('created_at', end.toISOString())
+    .order('created_at', { ascending: true });
+
+  if (gamesError) throw gamesError;
+
+  const gameList = (games ?? []) as Game[];
+  if (gameList.length === 0) return [];
+
+  const gameIds = gameList.map((g) => g.id);
+
+  const [teamsRes, playersRes, roundsRes] = await Promise.all([
+    supabase.from('teams').select('*').in('game_id', gameIds),
+    supabase.from('players').select('*').in('game_id', gameIds),
+    supabase.from('rounds').select('*').in('game_id', gameIds),
+  ]);
+
+  if (teamsRes.error) throw teamsRes.error;
+  if (playersRes.error) throw playersRes.error;
+  if (roundsRes.error) throw roundsRes.error;
+
+  const teams = (teamsRes.data ?? []) as Team[];
+  const players = (playersRes.data ?? []) as Player[];
+  const rounds = (roundsRes.data ?? []) as Round[];
+  const roundIds = rounds.map((r) => r.id);
+
+  let scores: Score[] = [];
+  let penalties: Penalty[] = [];
+
+  if (roundIds.length > 0) {
+    const [scoresRes, penaltiesRes] = await Promise.all([
+      supabase.from('scores').select('*').in('round_id', roundIds),
+      supabase.from('penalties').select('*').in('round_id', roundIds),
+    ]);
+
+    if (scoresRes.error) throw scoresRes.error;
+    if (penaltiesRes.error) throw penaltiesRes.error;
+
+    scores = (scoresRes.data ?? []) as Score[];
+    penalties = (penaltiesRes.data ?? []) as Penalty[];
+  }
+
+  return gameList.map((game) => {
+    const gameRoundIds = new Set(
+      rounds.filter((r) => r.game_id === game.id).map((r) => r.id),
+    );
+    return {
+      game,
+      teams: teams.filter((t) => t.game_id === game.id),
+      players: players.filter((p) => p.game_id === game.id),
+      rounds: rounds.filter((r) => r.game_id === game.id),
+      scores: scores.filter((s) => gameRoundIds.has(s.round_id)),
+      penalties: penalties.filter((p) => gameRoundIds.has(p.round_id)),
     };
   });
 }
@@ -223,10 +414,13 @@ export async function finishRound(
   }
 }
 
-export async function finishGame(gameId: string): Promise<void> {
+export async function finishGame(
+  gameId: string,
+  winnerTeamId: string | null = null,
+): Promise<void> {
   const { error } = await supabase
     .from('games')
-    .update({ status: GameStatus.Finished })
+    .update({ status: GameStatus.Finished, winner_team_id: winnerTeamId })
     .eq('id', gameId);
 
   if (error) throw error;

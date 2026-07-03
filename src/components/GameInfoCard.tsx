@@ -44,7 +44,7 @@ export function GameInfoCard({ game, teams, players, rounds }: GameInfoCardProps
         </Box>
       </CardHeader>
       <CardBody pt={0} px={{ base: 3, md: 6 }}>
-        <SimpleGrid columns={{ base: 1, sm: 2, md: 4 }} spacing={4}>
+        <SimpleGrid columns={{ base: 2, md: 4 }} spacing={4}>
           <Box>
             <Text fontSize="xs" color="gray.500" textTransform="uppercase">
               {az.gameInfo.totalRounds}
@@ -59,7 +59,7 @@ export function GameInfoCard({ game, teams, players, rounds }: GameInfoCardProps
               {currentRound === 0 ? az.gameInfo.notStarted : currentRound}
             </Text>
           </Box>
-          <Box>
+          <Box gridColumn={{ base: 'span 2', md: 'span 1' }}>
             <Text fontSize="xs" color="gray.500" textTransform="uppercase">
               {az.gameInfo.teams}
             </Text>
@@ -67,7 +67,7 @@ export function GameInfoCard({ game, teams, players, rounds }: GameInfoCardProps
               {teams.map((t) => t.name).join(', ')}
             </Text>
           </Box>
-          <Box>
+          <Box gridColumn={{ base: 'span 2', md: 'span 1' }}>
             <Text fontSize="xs" color="gray.500" textTransform="uppercase">
               {az.gameInfo.players}
             </Text>

@@ -3,7 +3,7 @@ import { Link as RouterLink, useLocation } from 'react-router-dom';
 import { az } from '../i18n/az';
 
 interface PageLayoutProps {
-  title: string;
+  title?: string;
   subtitle?: string;
   children: React.ReactNode;
 }
@@ -11,6 +11,7 @@ interface PageLayoutProps {
 const navLinks = [
   { to: '/', label: az.nav.games },
   { to: '/create', label: az.nav.newGame },
+  { to: '/stats', label: az.nav.stats },
 ];
 
 export function PageLayout({ title, subtitle, children }: PageLayoutProps) {
@@ -68,16 +69,18 @@ export function PageLayout({ title, subtitle, children }: PageLayoutProps) {
         px={{ base: 3, md: 4 }}
         pb={{ base: 8, md: 8 }}
       >
-        <Box mb={{ base: 4, md: 6 }}>
-          <Heading size={{ base: 'md', md: 'lg' }} mb={subtitle ? 1 : 0} noOfLines={2}>
-            {title}
-          </Heading>
-          {subtitle && (
-            <Text color="gray.600" fontSize="sm">
-              {subtitle}
-            </Text>
-          )}
-        </Box>
+        {title && (
+          <Box mb={{ base: 4, md: 6 }}>
+            <Heading size={{ base: 'md', md: 'lg' }} mb={subtitle ? 1 : 0} noOfLines={2}>
+              {title}
+            </Heading>
+            {subtitle && (
+              <Text color="gray.600" fontSize="sm">
+                {subtitle}
+              </Text>
+            )}
+          </Box>
+        )}
         {children}
       </Container>
     </Box>

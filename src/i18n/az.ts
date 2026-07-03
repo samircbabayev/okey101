@@ -7,6 +7,7 @@ export const az = {
   nav: {
     games: 'Oyunlar',
     newGame: 'Yeni oyun',
+    stats: 'Statistika',
   },
 
   common: {
@@ -32,9 +33,58 @@ export const az = {
     rounds: 'raund',
     viewResults: 'Nəticəyə bax',
     continueGame: 'Davam et',
+    winner: 'Qalib',
     notStarted: 'Başlamayıb',
     roundInProgress: (n: number) => `${n}. raund davam edir`,
     roundsCompleted: (done: number, total: number) => `${done}/${total} raund bitib`,
+    filterDate: 'Tarix',
+    allDates: 'Hamısı',
+    noGamesForDate: 'Bu tarixdə oyun yoxdur.',
+  },
+
+  stats: {
+    title: 'Statistika',
+    subtitle: 'Günlük oyunçu statistikası',
+    loading: 'Statistika yüklənir...',
+    filterDate: 'Tarix',
+    empty: 'Bu tarixdə oyun yoxdur.',
+    champion: 'Günün çempionu',
+    championHint: 'Ən çox qalibiyyət',
+    topPenalty: 'Ən çox cərimə sayı',
+    leaderboard: 'Reytinq',
+    player: 'Oyunçu',
+    games: 'Oyun',
+    wins: 'Qalib',
+    winRate: 'Qalib %',
+    total: 'Cəmi xal',
+    avg: 'Orta xal',
+    penaltyPoints: 'Cərimə xalı',
+    penaltyCount: 'Cərimə sayı',
+    rounds: 'Raund',
+    startedFirst: 'Birinci başlama',
+    bestGame: 'Ən yaxşı oyun',
+    worstGame: 'Ən pis oyun',
+    penaltyByReason: 'Cərimə səbəbləri',
+    noPenalties: 'Cərimə yoxdur',
+    details: 'Ətraflı',
+    lowestWins: 'Az xal daha yaxşıdır',
+    funZone: 'Günün qazqulaxları',
+    loser: 'Günün luzeri',
+    loserHint: (losses: number, winRate: number) =>
+      `${losses} məğlubiyyət · Qalib ${winRate}%`,
+    winless: 'Əliboş',
+    winlessHint: 'Bu gün heç udmadı',
+    disaster: 'Fəlakət oyunu',
+    disasterHint: (points: number) => `${points} xal — günün ən pis oyunu`,
+    specialists: 'Cərimə mütəxəssisləri',
+    specialistLine: (reason: string, name: string, count: number) =>
+      `${reason}: ${name} (${count})`,
+    mistakeMachine: 'Səhv maşını',
+    mistakeMachineHint: (rate: number) => `Oyun başına ${rate} cərimə`,
+    debtor: 'Ən çox cərimə',
+    debtorHint: (points: number) => `${points} cərimə xalı`,
+    biggestHit: 'Ən ağır zərbə',
+    biggestHitHint: (points: number) => `Tək cərimə: +${points}`,
   },
 
   createGame: {
@@ -49,6 +99,7 @@ export const az = {
     playerCount: 'Oyunçu sayı',
     players: 'Oyunçular',
     player: (n: number) => `Oyunçu ${n}`,
+    gameNumber: (n: number) => `Oyun ${n}`,
     name: 'Ad',
     turnOrder: 'Növbə',
     startFirst: 'Birinci başla',
@@ -78,7 +129,9 @@ export const az = {
     gameFinished: 'Oyun bitdi — xallar aşağıdadır.',
     finishGameTitle: 'Oyunu bitir',
     finishGameBody:
-      'Oyunu indi bitirmək istəyirsən? Qalib cari xallara görə müəyyən olunacaq. Geri qaytarmaq olmaz.',
+      'Oyunu indi bitir. Qalib komandanı seçə bilərsən, seçməsən qalib cari xallara görə müəyyən olunur. Geri qaytarmaq olmaz.',
+    finishGameWinnerLabel: 'Qalib komanda',
+    finishGameWinnerAuto: 'Avtomatik (xala görə)',
     toasts: {
       roundStarted: 'Raund başladı',
       roundStartFailed: 'Raund başlamadı',
@@ -86,6 +139,14 @@ export const az = {
       gameFinished: 'Oyun bitdi',
       gameFinishFailed: 'Oyun bitmədi',
     },
+  },
+
+  activeRoundPenalties: {
+    title: 'Cari raund cərimələri',
+    empty: 'Bu raundda hələ cərimə yoxdur.',
+    playerTotal: (n: number) => `+${n}`,
+    roundTotal: (n: number) => `Raund cəmi: +${n}`,
+    entryCount: (n: number) => `${n} cərimə`,
   },
 
   gameInfo: {
@@ -97,7 +158,7 @@ export const az = {
   },
 
   scoreboard: {
-    title: 'Xal cədvəli',
+    title: 'Oyunçu xal cədvəli',
     player: 'Oyunçu',
     team: 'Komanda',
     points: 'Xal',
@@ -107,7 +168,10 @@ export const az = {
     grandTotal: 'Ümumi',
     winner: 'Qalib',
     winnerPoints: (team: string, points: number) => `${team} — ${points} xal`,
-    lowestWins: 'Ən az xal qazanır',
+    lowestWins: 'Avtomatik: ən az xal qazanır',
+    winnerManual: 'Qalib əl ilə seçildi',
+    draw: 'Bərabərlik',
+    drawHint: 'Komandalar eyni xal topladı — qalib yoxdur',
     unknownTeam: 'Naməlum',
   },
 

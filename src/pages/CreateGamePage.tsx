@@ -16,11 +16,11 @@ import {
   Stack,
   Text,
 } from '@chakra-ui/react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageLayout } from '../components/PageLayout';
-import { az, randomGameName } from '../i18n/az';
-import { createGame } from '../services/gameService';
+import { az } from '../i18n/az';
+import { createGame, getNextGameNameForToday } from '../services/gameService';
 import {
   hasLastGameCache,
   loadLastGameCache,
@@ -51,6 +51,7 @@ const DEFAULT_PLAYERS: PlayerFormRow[] = [
 export function CreateGamePage() {
   const navigate = useNavigate();
   const [name, setName] = useState('');
+  const [nextGameName, setNextGameName] = useState('');
   const [teamCount, setTeamCount] = useState(2);
   const [totalRounds, setTotalRounds] = useState('5');
   const [playerCount, setPlayerCount] = useState(2);
@@ -58,6 +59,20 @@ export function CreateGamePage() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const showLastGameButton = useMemo(() => hasLastGameCache(), []);
+
+  useEffect(() => {
+    let active = true;
+    getNextGameNameForToday()
+      .then((next) => {
+        if (!active) return;
+        setNextGameName(next);
+        setName((prev) => prev || next);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const teamOptions = useMemo(
     () => Array.from({ length: teamCount }, (_, i) => i + 1),
@@ -93,21 +108,16 @@ export function CreateGamePage() {
 
   const setPlayerStartFirst = (index: number) => {
     setPlayers((prev) => {
-      const others = prev
-        .map((p, i) => ({ ...p, i }))
-        .filter((item) => item.i !== index)
-        .sort((a, b) => a.turnOrder - b.turnOrder);
-
-      return prev.map((p, i) => {
-        if (i === index) return { ...p, turnOrder: 1 };
-        const pos = others.findIndex((o) => o.i === i);
-        return { ...p, turnOrder: pos + 2 };
-      });
+      const count = prev.length;
+      return prev.map((p, i) => ({
+        ...p,
+        turnOrder: ((i - index + count) % count) + 1,
+      }));
     });
   };
 
   const fillDefaultData = () => {
-    setName(randomGameName());
+    setName((prev) => nextGameName || prev);
     setTeamCount(2);
     setTotalRounds('5');
     setPlayerCount(4);
@@ -119,7 +129,7 @@ export function CreateGamePage() {
     const cached = loadLastGameCache();
     if (!cached) return;
 
-    setName(randomGameName());
+    setName((prev) => nextGameName || prev);
     setTeamCount(cached.teamCount);
     setTotalRounds(String(cached.totalRounds));
     setPlayerCount(cached.players.length);

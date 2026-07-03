@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { CreateGamePage } from './pages/CreateGamePage';
 import { GameListPage } from './pages/GameListPage';
 import { GamePage } from './pages/GamePage';
+import { StatsPage } from './pages/StatsPage';
 
 const theme = extendTheme({
   config: {
@@ -48,6 +49,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={<GameListPage />} />
       <Route path="/create" element={<CreateGamePage />} />
+      <Route path="/stats" element={<StatsPage />} />
       <Route path="/game/:id" element={<GamePage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
