@@ -1,6 +1,7 @@
 import {
   Badge,
   Box,
+  Button,
   Card,
   CardBody,
   CardHeader,
@@ -18,8 +19,13 @@ import {
   useDisclosure,
 } from '@chakra-ui/react';
 import { az } from '../i18n/az';
-import type { Game, PlayerTotals, TeamTotals } from '../types';
-import { isTiedGame, resolveWinningTeam } from '../utils/scoreCalculations';
+import { GameStatus, type Game, type PlayerTotals, type TeamTotals } from '../types';
+import {
+  getLeadStatus,
+  isTiedGame,
+  resolveWinningTeam,
+} from '../utils/scoreCalculations';
+import { isSpeechSupported, speak } from '../utils/speech';
 
 interface ScoreboardProps {
   playerTotals: PlayerTotals[];
@@ -69,6 +75,12 @@ function StatCell({
 export function Scoreboard({ playerTotals, teamTotals, game }: ScoreboardProps) {
   const winner = resolveWinningTeam(game, teamTotals);
   const draw = isTiedGame(game, teamTotals);
+  const lead = getLeadStatus(teamTotals);
+  const leadText = lead
+    ? lead.tie
+      ? az.scoreboard.leadTie
+      : az.scoreboard.leadBy(lead.leaderName, lead.margin)
+    : '';
   const { isOpen, onToggle } = useDisclosure({ defaultIsOpen: false });
 
   const teamMembers = (teamId: string) =>
@@ -176,6 +188,40 @@ export function Scoreboard({ playerTotals, teamTotals, game }: ScoreboardProps) 
                 {az.scoreboard.drawHint}
               </Text>
             </Box>
+          )}
+
+          {game.status === GameStatus.Active && lead && (
+            <Flex
+              mt={4}
+              p={3}
+              bg="blue.50"
+              borderRadius="md"
+              borderWidth="1px"
+              borderColor="blue.200"
+              align="center"
+              justify="space-between"
+              gap={3}
+            >
+              <Text
+                fontWeight="semibold"
+                color="blue.800"
+                fontSize={{ base: 'sm', md: 'md' }}
+              >
+                {leadText}
+              </Text>
+              {isSpeechSupported() && (
+                <Button
+                  size="sm"
+                  colorScheme="blue"
+                  variant="ghost"
+                  flexShrink={0}
+                  aria-label={az.game.speak}
+                  onClick={() => speak(leadText)}
+                >
+                  🔊 {az.game.speak}
+                </Button>
+              )}
+            </Flex>
           )}
         </CardBody>
       </Card>

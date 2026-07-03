@@ -89,6 +89,22 @@ export function isTiedGame(
   return getWinningTeam(teamTotals) === null;
 }
 
+export interface LeadStatus {
+  tie: boolean;
+  leaderName: string;
+  margin: number;
+}
+
+export function getLeadStatus(teamTotals: TeamTotals[]): LeadStatus | null {
+  if (teamTotals.length < 2) return null;
+  const sorted = [...teamTotals].sort((a, b) => a.grandTotal - b.grandTotal);
+  const margin = sorted[1].grandTotal - sorted[0].grandTotal;
+  if (margin === 0) {
+    return { tie: true, leaderName: '', margin: 0 };
+  }
+  return { tie: false, leaderName: sorted[0].teamName, margin };
+}
+
 export function resolveWinningTeam(
   game: Pick<Game, 'status' | 'winner_team_id'>,
   teamTotals: TeamTotals[],

@@ -126,6 +126,7 @@ export const az = {
     finishGame: 'Oyunu bitir',
     roundInProgress: (n: number) => `${n}. raund davam edir`,
     startingPlayer: (name: string) => `Başlayan: ${name}`,
+    speak: 'Səslə',
     gameFinished: 'Oyun bitdi — xallar aşağıdadır.',
     finishGameTitle: 'Oyunu bitir',
     finishGameBody:
@@ -172,6 +173,9 @@ export const az = {
     winnerManual: 'Qalib əl ilə seçildi',
     draw: 'Bərabərlik',
     drawHint: 'Komandalar eyni xal topladı — qalib yoxdur',
+    leadBy: (team: string, points: number) =>
+      `${team}, ${points} xal ilə qabaqdadır`,
+    leadTie: 'Komandaların xalı bərabərdir',
     unknownTeam: 'Naməlum',
   },
 

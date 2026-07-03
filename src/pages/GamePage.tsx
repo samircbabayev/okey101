@@ -9,6 +9,7 @@ import {
   AlertIcon,
   Box,
   Button,
+  Flex,
   FormControl,
   FormLabel,
   Select,
@@ -38,6 +39,7 @@ import {
   canStartRound,
   getActiveRound,
 } from '../utils/scoreCalculations';
+import { isSpeechSupported, speak } from '../utils/speech';
 
 export function GamePage() {
   const { id } = useParams<{ id: string }>();
@@ -132,6 +134,12 @@ export function GamePage() {
     ? players.find((p) => p.id === activeRound.started_by_player_id)?.name
     : null;
 
+  const roundSpeech = activeRound
+    ? starterName
+      ? `${az.game.roundInProgress(activeRound.round_number)}. ${az.game.startingPlayer(starterName)}`
+      : az.game.roundInProgress(activeRound.round_number)
+    : '';
+
   return (
     <PageLayout>
       <Stack spacing={6}>
@@ -140,16 +148,30 @@ export function GamePage() {
         {activeRound && (
           <Alert status="info" borderRadius="md">
             <AlertIcon />
-            <Box>
-              <Text fontWeight="bold" fontSize={{ base: 'lg', md: 'xl' }}>
-                {az.game.roundInProgress(activeRound.round_number)}
-              </Text>
-              {starterName && (
-                <Text fontSize={{ base: 'md', md: 'lg' }}>
-                  {az.game.startingPlayer(starterName)}
+            <Flex flex={1} align="center" justify="space-between" gap={3}>
+              <Box>
+                <Text fontWeight="bold" fontSize={{ base: 'lg', md: 'xl' }}>
+                  {az.game.roundInProgress(activeRound.round_number)}
                 </Text>
+                {starterName && (
+                  <Text fontSize={{ base: 'md', md: 'lg' }}>
+                    {az.game.startingPlayer(starterName)}
+                  </Text>
+                )}
+              </Box>
+              {isSpeechSupported() && (
+                <Button
+                  size="sm"
+                  colorScheme="blue"
+                  variant="ghost"
+                  flexShrink={0}
+                  aria-label={az.game.speak}
+                  onClick={() => speak(roundSpeech)}
+                >
+                  🔊 {az.game.speak}
+                </Button>
               )}
-            </Box>
+            </Flex>
           </Alert>
         )}
 
