@@ -1,5 +1,43 @@
 import { GameStatus, PenaltyReason } from '../types';
 
+// Azerbaijani ordinal suffix follows 4-way vowel harmony (-cı/-ci/-cu/-cü),
+// determined by the last vowel of the spoken number word.
+const UNIT_ORDINAL_SUFFIX: Record<number, string> = {
+  1: 'ci',
+  2: 'ci',
+  3: 'cü',
+  4: 'cü',
+  5: 'ci',
+  6: 'cı',
+  7: 'ci',
+  8: 'ci',
+  9: 'cu',
+};
+
+const TENS_ORDINAL_SUFFIX: Record<number, string> = {
+  10: 'cu',
+  20: 'ci',
+  30: 'cu',
+  40: 'cı',
+  50: 'ci',
+  60: 'cı',
+  70: 'ci',
+  80: 'ci',
+  90: 'cı',
+};
+
+export function azOrdinal(n: number): string {
+  const units = n % 10;
+  if (units !== 0) return `${n}-${UNIT_ORDINAL_SUFFIX[units]}`;
+
+  const tens = n % 100;
+  if (tens !== 0) return `${n}-${TENS_ORDINAL_SUFFIX[tens]}`;
+
+  // "yüz" (hundreds) → cü, "min" (thousands) → ci
+  if (n % 1000 !== 0) return `${n}-cü`;
+  return `${n}-ci`;
+}
+
 export const az = {
   appTitle: '101 Okey',
   appTitleFull: '101 Okey Xal İzləyici',
@@ -42,7 +80,7 @@ export const az = {
     continueGame: 'Davam et',
     winner: 'Qalib',
     notStarted: 'Başlamayıb',
-    roundInProgress: (n: number) => `${n}. raund davam edir`,
+    roundInProgress: (n: number) => `${azOrdinal(n)} raund davam edir`,
     roundsCompleted: (done: number, total: number) => `${done}/${total} raund bitib`,
     filterDate: 'Tarix',
     allDates: 'Hamısı',
@@ -130,9 +168,14 @@ export const az = {
     addPenalty: 'Cərimə əlavə et',
     finishRound: 'Raundu bitir',
     finishGame: 'Oyunu bitir',
-    roundInProgress: (n: number) => `${n}. raund davam edir`,
-    startingPlayer: (name: string) => `Başlayan: ${name}`,
+    roundInProgress: (n: number) => `${azOrdinal(n)} raund davam edir`,
+    roundInProgressSpeech: (n: number) => `${n}. raund davam edir`,
+    startingPlayer: (name: string) => `Başlayan: ${name}.`,
     speak: 'Səslə',
+    editStarter: 'Başlayanı dəyiş',
+    editStarterTitle: 'Başlayan oyunçunu dəyiş',
+    editStarterLabel: 'Başlayan oyunçu',
+    save: 'Yadda saxla',
     gameFinished: 'Oyun bitdi — xallar aşağıdadır.',
     finishGameTitle: 'Oyunu bitir',
     finishGameBody:
@@ -143,6 +186,8 @@ export const az = {
       finishRoundFirst: 'Əvvəl cari raundu bitir',
       gameFinished: 'Oyun bitdi',
       gameFinishFailed: 'Oyun bitmədi',
+      starterUpdated: 'Başlayan yeniləndi',
+      starterUpdateFailed: 'Başlayan yenilənmədi',
     },
   },
 
@@ -186,7 +231,7 @@ export const az = {
   roundHistory: {
     title: 'Raund tarixçəsi',
     empty: 'Hələ bitmiş raund yoxdur.',
-    round: (n: number) => `${n}. raund`,
+    round: (n: number) => `${azOrdinal(n)} raund`,
     finished: 'BİTİB',
     startedBy: (name: string) => `Başlayan: ${name}`,
     scores: 'Xallar',
@@ -213,7 +258,7 @@ export const az = {
   },
 
   finishRoundModal: {
-    title: (n: number) => `${n}. raundu bitir`,
+    title: (n: number) => `${azOrdinal(n)} raundu bitir`,
     hint: 'Hər oyunçu üçün xal daxil et. Bu raundun cərimələri göstərilir.',
     roundPenalties: (n: number) => `Raund cəriməsi: +${n}`,
     submit: 'Raundu bitir',

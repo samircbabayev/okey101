@@ -12,6 +12,13 @@ import {
   Flex,
   FormControl,
   FormLabel,
+  Modal,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalOverlay,
   Select,
   SimpleGrid,
   Stack,
@@ -31,7 +38,7 @@ import { RoundHistory } from '../components/RoundHistory';
 import { Scoreboard } from '../components/Scoreboard';
 import { useGameData } from '../hooks/useGameData';
 import { az } from '../i18n/az';
-import { finishGame } from '../services/gameService';
+import { finishGame, updateRoundStarter } from '../services/gameService';
 import { GameStatus } from '../types';
 import {
   calculatePlayerTotals,
@@ -46,10 +53,13 @@ export function GamePage() {
   const toast = useToast();
   const [finishGameLoading, setFinishGameLoading] = useState(false);
   const [winnerTeamId, setWinnerTeamId] = useState('');
+  const [starterId, setStarterId] = useState('');
+  const [starterLoading, setStarterLoading] = useState(false);
 
   const penaltyModal = useDisclosure();
   const finishModal = useDisclosure();
   const finishGameDialog = useDisclosure();
+  const starterModal = useDisclosure();
   const cancelRef = useRef<HTMLButtonElement>(null);
 
   if (loading) {
@@ -70,6 +80,8 @@ export function GamePage() {
 
   const { game, teams, players, rounds, scores, penalties } = data;
   const activeRound = getActiveRound(rounds);
+  const isActive = game.status === GameStatus.Active;
+  const showActiveRound = isActive && !!activeRound;
   const playerTotals = calculatePlayerTotals(players, teams, scores, penalties, rounds);
   const teamTotals = calculateTeamTotals(playerTotals);
 
@@ -80,6 +92,36 @@ export function GamePage() {
   const openFinishGameDialog = () => {
     setWinnerTeamId('');
     finishGameDialog.onOpen();
+  };
+
+  const openStarterModal = () => {
+    if (!activeRound) return;
+    setStarterId(activeRound.started_by_player_id ?? '');
+    starterModal.onOpen();
+  };
+
+  const handleSaveStarter = async () => {
+    if (!activeRound || !starterId) return;
+    setStarterLoading(true);
+    try {
+      await updateRoundStarter(activeRound.id, starterId);
+      starterModal.onClose();
+      toast({
+        title: az.game.toasts.starterUpdated,
+        status: 'success',
+        duration: 3000,
+      });
+      await refetch();
+    } catch (err) {
+      toast({
+        title: az.game.toasts.starterUpdateFailed,
+        description: err instanceof Error ? err.message : az.common.unknown,
+        status: 'error',
+        duration: 5000,
+      });
+    } finally {
+      setStarterLoading(false);
+    }
   };
 
   const handleFinishGame = async () => {
@@ -111,8 +153,8 @@ export function GamePage() {
 
   const roundSpeech = activeRound
     ? starterName
-      ? `${az.game.roundInProgress(activeRound.round_number)}. ${az.game.startingPlayer(starterName)}`
-      : az.game.roundInProgress(activeRound.round_number)
+      ? `${az.game.roundInProgressSpeech(activeRound.round_number)}. ${az.game.startingPlayer(starterName)}`
+      : az.game.roundInProgressSpeech(activeRound.round_number)
     : '';
 
   return (
@@ -120,25 +162,73 @@ export function GamePage() {
       <Stack spacing={6}>
         <GameInfoCard game={game} teams={teams} players={players} rounds={rounds} />
 
-        {activeRound && (
-          <Alert status="info" borderRadius="md">
-            <AlertIcon />
-            <Flex flex={1} align="center" justify="space-between" gap={3}>
-              <Box>
-                <Text fontWeight="bold" fontSize={{ base: 'lg', md: 'xl' }}>
-                  {az.game.roundInProgress(activeRound.round_number)}
-                </Text>
-                {starterName && (
-                  <Text fontSize={{ base: 'md', md: 'lg' }}>
-                    {az.game.startingPlayer(starterName)}
+        {showActiveRound && activeRound && (
+          <Box
+            borderRadius="xl"
+            bgGradient="linear(to-r, blue.50, teal.50)"
+            borderWidth="1px"
+            borderColor="blue.200"
+            px={{ base: 3, md: 5 }}
+            py={{ base: 3, md: 4 }}
+            shadow="sm"
+          >
+            <Flex align="center" justify="space-between" gap={3}>
+              <Flex align="center" gap={3} minW={0}>
+                <Flex
+                  align="center"
+                  justify="center"
+                  boxSize={{ base: 10, md: 12 }}
+                  borderRadius="full"
+                  bg="blue.500"
+                  color="white"
+                  fontWeight="bold"
+                  fontSize={{ base: 'lg', md: 'xl' }}
+                  flexShrink={0}
+                >
+                  {activeRound.round_number}
+                </Flex>
+                <Box minW={0}>
+                  <Text
+                    fontWeight="bold"
+                    fontSize={{ base: 'md', md: 'lg' }}
+                    color="gray.800"
+                    noOfLines={1}
+                  >
+                    {az.game.roundInProgress(activeRound.round_number)}
                   </Text>
-                )}
-              </Box>
+                  {starterName && (
+                    <Flex align="center" gap={1.5} mt={0.5}>
+                      <Text
+                        fontSize={{ base: 'sm', md: 'md' }}
+                        color="gray.600"
+                        noOfLines={1}
+                      >
+                        {az.game.startingPlayer(starterName)}
+                      </Text>
+                      <Button
+                        size="xs"
+                        variant="ghost"
+                        colorScheme="blue"
+                        minH="auto"
+                        h="22px"
+                        minW="22px"
+                        px={1}
+                        fontSize="sm"
+                        onClick={openStarterModal}
+                        aria-label={az.game.editStarter}
+                        title={az.game.editStarter}
+                      >
+                        ✏️
+                      </Button>
+                    </Flex>
+                  )}
+                </Box>
+              </Flex>
               {isSpeechSupported() && (
                 <Button
                   size="sm"
                   colorScheme="blue"
-                  variant="ghost"
+                  variant="solid"
                   flexShrink={0}
                   aria-label={az.game.speak}
                   onClick={() => speak(roundSpeech)}
@@ -147,10 +237,10 @@ export function GamePage() {
                 </Button>
               )}
             </Flex>
-          </Alert>
+          </Box>
         )}
 
-        {game.status === GameStatus.Active && (
+        {isActive && (
           <SimpleGrid columns={{ base: 1, md: 3 }} spacing={3}>
             <Button
               colorScheme="orange"
@@ -184,7 +274,7 @@ export function GamePage() {
           </SimpleGrid>
         )}
 
-        {activeRound && (
+        {showActiveRound && activeRound && (
           <ActiveRoundPenalties
             roundId={activeRound.id}
             roundNumber={activeRound.round_number}
@@ -293,6 +383,47 @@ export function GamePage() {
           </AlertDialogContent>
         </AlertDialogOverlay>
       </AlertDialog>
+
+      <Modal isOpen={starterModal.isOpen} onClose={starterModal.onClose} isCentered>
+        <ModalOverlay />
+        <ModalContent mx={{ base: 3, md: 4 }} maxW="md">
+          <ModalHeader fontSize={{ base: 'md', md: 'lg' }}>
+            {az.game.editStarterTitle}
+          </ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <FormControl>
+              <FormLabel>{az.game.editStarterLabel}</FormLabel>
+              <Select value={starterId} onChange={(e) => setStarterId(e.target.value)}>
+                {[...players]
+                  .sort((a, b) => a.turn_order - b.turn_order)
+                  .map((player) => {
+                    const team = teams.find((t) => t.id === player.team_id);
+                    return (
+                      <option key={player.id} value={player.id}>
+                        {player.name}
+                        {team ? ` (${team.name})` : ''}
+                      </option>
+                    );
+                  })}
+              </Select>
+            </FormControl>
+          </ModalBody>
+          <ModalFooter flexDirection={{ base: 'column-reverse', sm: 'row' }} gap={2}>
+            <Button onClick={starterModal.onClose} w={{ base: 'full', sm: 'auto' }}>
+              {az.common.cancel}
+            </Button>
+            <Button
+              colorScheme="teal"
+              onClick={handleSaveStarter}
+              isLoading={starterLoading}
+              w={{ base: 'full', sm: 'auto' }}
+            >
+              {az.game.save}
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </PageLayout>
   );
 }
