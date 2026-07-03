@@ -275,11 +275,28 @@ export async function createGame(input: CreateGameInput): Promise<string> {
     turn_order: p.turnOrder,
   }));
 
-  const { error: playersError } = await supabase
+  const { data: insertedPlayers, error: playersError } = await supabase
     .from('players')
-    .insert(playerRows);
+    .insert(playerRows)
+    .select('id, turn_order');
 
   if (playersError) throw playersError;
+
+  const sortedPlayers = [...(insertedPlayers ?? [])].sort(
+    (a, b) => (a.turn_order as number) - (b.turn_order as number),
+  );
+  const firstStarter = sortedPlayers[0];
+
+  if (firstStarter) {
+    const { error: roundError } = await supabase.from('rounds').insert({
+      game_id: gameId,
+      round_number: 1,
+      started_by_player_id: firstStarter.id,
+      is_finished: false,
+    });
+
+    if (roundError) throw roundError;
+  }
 
   return gameId;
 }
