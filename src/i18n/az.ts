@@ -10,6 +10,13 @@ export const az = {
     stats: 'Statistika',
   },
 
+  notFound: {
+    title: 'Səhifə tapılmadı',
+    code: '404',
+    message: 'Axtardığın səhifə mövcud deyil və ya köçürülüb.',
+    backHome: 'Ana səhifəyə qayıt',
+  },
+
   common: {
     cancel: 'Ləğv et',
     loading: 'Yüklənir...',

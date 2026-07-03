@@ -1,8 +1,9 @@
 import { ChakraProvider, extendTheme } from '@chakra-ui/react';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { CreateGamePage } from './pages/CreateGamePage';
 import { GameListPage } from './pages/GameListPage';
 import { GamePage } from './pages/GamePage';
+import { NotFoundPage } from './pages/NotFoundPage';
 import { StatsPage } from './pages/StatsPage';
 
 const theme = extendTheme({
@@ -51,7 +52,7 @@ function AppRoutes() {
       <Route path="/create" element={<CreateGamePage />} />
       <Route path="/stats" element={<StatsPage />} />
       <Route path="/game/:id" element={<GamePage />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }
