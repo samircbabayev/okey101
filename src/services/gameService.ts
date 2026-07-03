@@ -456,3 +456,75 @@ export async function updateRoundStarter(
 
   if (error) throw error;
 }
+
+export async function deleteTodaysGames(): Promise<number> {
+  const { start, end } = todayRange();
+
+  const { data: games, error: gamesError } = await supabase
+    .from('games')
+    .select('id')
+    .gte('created_at', start.toISOString())
+    .lt('created_at', end.toISOString());
+
+  if (gamesError) throw gamesError;
+
+  const gameIds = (games ?? []).map((g) => g.id as string);
+  if (gameIds.length === 0) return 0;
+
+  // games.winner_team_id references teams(id); clear it so teams can be removed.
+  const { error: clearWinnerError } = await supabase
+    .from('games')
+    .update({ winner_team_id: null })
+    .in('id', gameIds);
+
+  if (clearWinnerError) throw clearWinnerError;
+
+  const { data: rounds, error: roundsError } = await supabase
+    .from('rounds')
+    .select('id')
+    .in('game_id', gameIds);
+
+  if (roundsError) throw roundsError;
+
+  const roundIds = (rounds ?? []).map((r) => r.id as string);
+
+  if (roundIds.length > 0) {
+    const { error: penaltiesError } = await supabase
+      .from('penalties')
+      .delete()
+      .in('round_id', roundIds);
+    if (penaltiesError) throw penaltiesError;
+
+    const { error: scoresError } = await supabase
+      .from('scores')
+      .delete()
+      .in('round_id', roundIds);
+    if (scoresError) throw scoresError;
+  }
+
+  const { error: roundsDeleteError } = await supabase
+    .from('rounds')
+    .delete()
+    .in('game_id', gameIds);
+  if (roundsDeleteError) throw roundsDeleteError;
+
+  const { error: playersError } = await supabase
+    .from('players')
+    .delete()
+    .in('game_id', gameIds);
+  if (playersError) throw playersError;
+
+  const { error: teamsError } = await supabase
+    .from('teams')
+    .delete()
+    .in('game_id', gameIds);
+  if (teamsError) throw teamsError;
+
+  const { error: gamesDeleteError } = await supabase
+    .from('games')
+    .delete()
+    .in('id', gameIds);
+  if (gamesDeleteError) throw gamesDeleteError;
+
+  return gameIds.length;
+}

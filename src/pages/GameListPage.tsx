@@ -7,9 +7,19 @@ import {
   Flex,
   FormControl,
   FormLabel,
+  IconButton,
   Input,
+  Modal,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalOverlay,
   Stack,
   Text,
+  useDisclosure,
+  useToast,
 } from '@chakra-ui/react';
 import { useMemo, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
@@ -17,7 +27,10 @@ import { ErrorState, LoadingState } from '../components/LoadingState';
 import { PageLayout } from '../components/PageLayout';
 import { useGames } from '../hooks/useGames';
 import { az, gameStatusLabel } from '../i18n/az';
+import { deleteTodaysGames } from '../services/gameService';
 import { GameStatus, type GameListItem } from '../types';
+
+const DELETE_PASSWORD = 'samir1234';
 
 function toDateInputValue(date: Date): string {
   const year = date.getFullYear();
@@ -60,7 +73,11 @@ function formatDate(dateStr: string): string {
 }
 
 export function GameListPage() {
-  const { games, loading, error } = useGames();
+  const { games, loading, error, refetch } = useGames();
+  const toast = useToast();
+  const deleteModal = useDisclosure();
+  const [password, setPassword] = useState('');
+  const [deleting, setDeleting] = useState(false);
   const [dateFilter, setDateFilter] = useState<string>(() =>
     toDateInputValue(new Date()),
   );
@@ -71,6 +88,43 @@ export function GameListPage() {
       (item) => toDateInputValue(new Date(item.game.created_at)) === dateFilter,
     );
   }, [games, dateFilter]);
+
+  const openDeleteModal = () => {
+    setPassword('');
+    deleteModal.onOpen();
+  };
+
+  const handleDeleteToday = async () => {
+    if (password !== DELETE_PASSWORD) {
+      toast({
+        title: az.gameList.deleteWrongPassword,
+        status: 'error',
+        duration: 3000,
+      });
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      const count = await deleteTodaysGames();
+      deleteModal.onClose();
+      toast({
+        title: count > 0 ? az.gameList.deleteSuccess(count) : az.gameList.deleteNoGames,
+        status: count > 0 ? 'success' : 'info',
+        duration: 3000,
+      });
+      await refetch();
+    } catch (err) {
+      toast({
+        title: az.gameList.deleteFailed,
+        description: err instanceof Error ? err.message : az.common.unknown,
+        status: 'error',
+        duration: 5000,
+      });
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -105,14 +159,25 @@ export function GameListPage() {
           onChange={(e) => setDateFilter(e.target.value)}
         />
       </FormControl>
-      <Button
-        variant="outline"
-        onClick={() => setDateFilter('')}
-        isDisabled={!dateFilter}
-        w={{ base: 'full', sm: 'auto' }}
-      >
-        {az.gameList.allDates}
-      </Button>
+      <Flex gap={3} align="flex-end">
+        <Button
+          variant="outline"
+          onClick={() => setDateFilter('')}
+          isDisabled={!dateFilter}
+          flex={{ base: 1, sm: 'none' }}
+        >
+          {az.gameList.allDates}
+        </Button>
+        <IconButton
+          aria-label={az.gameList.deleteToday}
+          title={az.gameList.deleteToday}
+          icon={<Text fontSize="lg">🗑️</Text>}
+          colorScheme="red"
+          variant="outline"
+          onClick={openDeleteModal}
+          flexShrink={0}
+        />
+      </Flex>
     </Flex>
   );
 
@@ -213,6 +278,48 @@ export function GameListPage() {
           )}
         </>
       )}
+
+      <Modal isOpen={deleteModal.isOpen} onClose={deleteModal.onClose} isCentered>
+        <ModalOverlay />
+        <ModalContent mx={{ base: 3, md: 4 }} maxW="md">
+          <ModalHeader fontSize={{ base: 'md', md: 'lg' }}>
+            {az.gameList.deleteTodayTitle}
+          </ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <Text mb={3} fontSize={{ base: 'sm', md: 'md' }} color="gray.600">
+              {az.gameList.deleteTodayBody}
+            </Text>
+            <FormControl>
+              <FormLabel>{az.gameList.deletePasswordLabel}</FormLabel>
+              <Input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder={az.gameList.deletePasswordPlaceholder}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleDeleteToday();
+                }}
+                autoFocus
+              />
+            </FormControl>
+          </ModalBody>
+          <ModalFooter flexDirection={{ base: 'column-reverse', sm: 'row' }} gap={2}>
+            <Button onClick={deleteModal.onClose} w={{ base: 'full', sm: 'auto' }}>
+              {az.common.cancel}
+            </Button>
+            <Button
+              colorScheme="red"
+              onClick={handleDeleteToday}
+              isLoading={deleting}
+              isDisabled={!password}
+              w={{ base: 'full', sm: 'auto' }}
+            >
+              {az.gameList.deleteConfirm}
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </PageLayout>
   );
 }
