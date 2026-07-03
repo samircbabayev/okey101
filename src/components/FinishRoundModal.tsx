@@ -85,7 +85,7 @@ export function FinishRoundModal({
         points: parseIntegerInput(points[p.id])!,
       }));
 
-      await finishRound(round, game, playerScores, penalties);
+      await finishRound(round, game, players, playerScores, penalties);
       onSuccess();
       onClose();
     } catch (err) {

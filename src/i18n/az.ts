@@ -120,7 +120,6 @@ export const az = {
     subtitle: 'Xal və raundları izlə',
     loading: 'Oyun yüklənir...',
     notFound: 'Oyun tapılmadı',
-    startRound: 'Raund başlat',
     addPenalty: 'Cərimə əlavə et',
     finishRound: 'Raundu bitir',
     finishGame: 'Oyunu bitir',
@@ -134,8 +133,6 @@ export const az = {
     finishGameWinnerLabel: 'Qalib komanda',
     finishGameWinnerAuto: 'Avtomatik (xala görə)',
     toasts: {
-      roundStarted: 'Raund başladı',
-      roundStartFailed: 'Raund başlamadı',
       finishRoundFirst: 'Əvvəl cari raundu bitir',
       gameFinished: 'Oyun bitdi',
       gameFinishFailed: 'Oyun bitmədi',

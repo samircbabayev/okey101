@@ -31,12 +31,11 @@ import { RoundHistory } from '../components/RoundHistory';
 import { Scoreboard } from '../components/Scoreboard';
 import { useGameData } from '../hooks/useGameData';
 import { az } from '../i18n/az';
-import { finishGame, startRound } from '../services/gameService';
+import { finishGame } from '../services/gameService';
 import { GameStatus } from '../types';
 import {
   calculatePlayerTotals,
   calculateTeamTotals,
-  canStartRound,
   getActiveRound,
 } from '../utils/scoreCalculations';
 import { isSpeechSupported, speak } from '../utils/speech';
@@ -45,7 +44,6 @@ export function GamePage() {
   const { id } = useParams<{ id: string }>();
   const { data, loading, error, refetch } = useGameData(id);
   const toast = useToast();
-  const [actionLoading, setActionLoading] = useState(false);
   const [finishGameLoading, setFinishGameLoading] = useState(false);
   const [winnerTeamId, setWinnerTeamId] = useState('');
 
@@ -74,29 +72,6 @@ export function GamePage() {
   const activeRound = getActiveRound(rounds);
   const playerTotals = calculatePlayerTotals(players, teams, scores, penalties, rounds);
   const teamTotals = calculateTeamTotals(playerTotals);
-  const canStart = canStartRound(game, rounds);
-
-  const handleStartRound = async () => {
-    setActionLoading(true);
-    try {
-      await startRound(game, players, rounds);
-      toast({
-        title: az.game.toasts.roundStarted,
-        status: 'success',
-        duration: 3000,
-      });
-      await refetch();
-    } catch (err) {
-      toast({
-        title: az.game.toasts.roundStartFailed,
-        description: err instanceof Error ? err.message : az.common.unknown,
-        status: 'error',
-        duration: 5000,
-      });
-    } finally {
-      setActionLoading(false);
-    }
-  };
 
   const handleActionSuccess = async () => {
     await refetch();
@@ -176,17 +151,7 @@ export function GamePage() {
         )}
 
         {game.status === GameStatus.Active && (
-          <SimpleGrid columns={{ base: 2, md: 4 }} spacing={3}>
-            <Button
-              colorScheme="teal"
-              onClick={handleStartRound}
-              isDisabled={!canStart}
-              isLoading={actionLoading}
-              size={{ base: 'sm', md: 'md' }}
-              w="full"
-            >
-              {az.game.startRound}
-            </Button>
+          <SimpleGrid columns={{ base: 1, md: 3 }} spacing={3}>
             <Button
               colorScheme="orange"
               variant="outline"

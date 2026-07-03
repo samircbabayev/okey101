@@ -27,6 +27,31 @@ function teamNumberFromName(name: string): number {
   return match ? parseInt(match[1], 10) : 0;
 }
 
+function startingPlayerIdForRound(
+  players: { id: string; turn_order: number }[],
+  roundNumber: number,
+): string | null {
+  if (players.length === 0) return null;
+  const sorted = [...players].sort((a, b) => a.turn_order - b.turn_order);
+  const starterIndex = (roundNumber - 1) % sorted.length;
+  return sorted[starterIndex].id;
+}
+
+async function insertRound(
+  gameId: string,
+  roundNumber: number,
+  startingPlayerId: string | null,
+): Promise<void> {
+  const { error } = await supabase.from('rounds').insert({
+    game_id: gameId,
+    round_number: roundNumber,
+    started_by_player_id: startingPlayerId,
+    is_finished: false,
+  });
+
+  if (error) throw error;
+}
+
 function todayRange(): { start: Date; end: Date } {
   const now = new Date();
   const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -282,21 +307,14 @@ export async function createGame(input: CreateGameInput): Promise<string> {
 
   if (playersError) throw playersError;
 
-  const sortedPlayers = [...(insertedPlayers ?? [])].sort(
-    (a, b) => (a.turn_order as number) - (b.turn_order as number),
+  const starterId = startingPlayerIdForRound(
+    (insertedPlayers ?? []).map((p) => ({
+      id: p.id as string,
+      turn_order: p.turn_order as number,
+    })),
+    1,
   );
-  const firstStarter = sortedPlayers[0];
-
-  if (firstStarter) {
-    const { error: roundError } = await supabase.from('rounds').insert({
-      game_id: gameId,
-      round_number: 1,
-      started_by_player_id: firstStarter.id,
-      is_finished: false,
-    });
-
-    if (roundError) throw roundError;
-  }
+  await insertRound(gameId, 1, starterId);
 
   return gameId;
 }
@@ -342,43 +360,6 @@ export async function fetchGameData(gameId: string): Promise<GameData> {
   };
 }
 
-export async function startRound(
-  game: Game,
-  players: Player[],
-  rounds: Round[],
-): Promise<Round> {
-  const nextRoundNumber = rounds.length + 1;
-
-  if (nextRoundNumber > game.total_rounds) {
-    throw new Error('All rounds have already been played');
-  }
-
-  const activeRound = rounds.find((r) => !r.is_finished);
-  if (activeRound) {
-    throw new Error('Finish the current round before starting a new one');
-  }
-
-  const sortedPlayers = [...players].sort((a, b) => a.turn_order - b.turn_order);
-  const starterIndex = (nextRoundNumber - 1) % sortedPlayers.length;
-  const startingPlayer = sortedPlayers[starterIndex];
-
-  const { data: round, error: roundError } = await supabase
-    .from('rounds')
-    .insert({
-      game_id: game.id,
-      round_number: nextRoundNumber,
-      started_by_player_id: startingPlayer.id,
-      is_finished: false,
-    })
-    .select('*')
-    .single();
-
-  if (roundError) throw roundError;
-  if (!round) throw new Error('Failed to start round');
-
-  return round as Round;
-}
-
 export async function createPenalty(input: CreatePenaltyInput): Promise<Penalty> {
   const { data, error } = await supabase
     .from('penalties')
@@ -401,6 +382,7 @@ export async function createPenalty(input: CreatePenaltyInput): Promise<Penalty>
 export async function finishRound(
   round: Round,
   game: Game,
+  players: Player[],
   playerScores: PlayerScoreInput[],
   penalties: Penalty[],
 ): Promise<void> {
@@ -428,7 +410,15 @@ export async function finishRound(
       .eq('id', game.id);
 
     if (gameError) throw gameError;
+    return;
   }
+
+  const nextRoundNumber = round.round_number + 1;
+  const starterId = startingPlayerIdForRound(
+    players.map((p) => ({ id: p.id, turn_order: p.turn_order })),
+    nextRoundNumber,
+  );
+  await insertRound(game.id, nextRoundNumber, starterId);
 }
 
 export async function finishGame(

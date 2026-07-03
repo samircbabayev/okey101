@@ -130,12 +130,6 @@ export function getCurrentRoundNumber(rounds: Round[]): number {
   return Math.max(...rounds.map((r) => r.round_number));
 }
 
-export function canStartRound(game: Game, rounds: Round[]): boolean {
-  if (game.status === GameStatus.Finished) return false;
-  if (rounds.some((r) => !r.is_finished)) return false;
-  return rounds.length < game.total_rounds;
-}
-
 export function getRoundPenaltiesForPlayer(
   penalties: Penalty[],
   roundId: string,
