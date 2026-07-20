@@ -21,7 +21,7 @@ import {
   useDisclosure,
   useToast,
 } from '@chakra-ui/react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import { ErrorState, LoadingState } from '../components/LoadingState';
 import { PageLayout } from '../components/PageLayout';
@@ -29,29 +29,13 @@ import { useGames } from '../hooks/useGames';
 import { az, gameStatusLabel } from '../i18n/az';
 import { deleteTodaysGames } from '../services/gameService';
 import { GameStatus, type GameListItem } from '../types';
+import {
+  getInitialDateRange,
+  saveDateRangeCache,
+  todayDateRange,
+} from '../utils/dateRangeCache';
 
 const DELETE_PASSWORD = 'samir1234';
-
-function pad2(n: number): string {
-  return String(n).padStart(2, '0');
-}
-
-/** Local datetime value for <input type="datetime-local" /> */
-function toDateTimeLocalValue(date: Date): string {
-  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}T${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
-}
-
-function startOfTodayLocal(): string {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  return toDateTimeLocalValue(d);
-}
-
-function endOfTodayLocal(): string {
-  const d = new Date();
-  d.setHours(23, 59, 0, 0);
-  return toDateTimeLocalValue(d);
-}
 
 function getProgressLabel(item: GameListItem): string {
   const { game, finishedRoundCount, hasActiveRound } = item;
@@ -94,8 +78,16 @@ export function GameListPage() {
   const deleteModal = useDisclosure();
   const [password, setPassword] = useState('');
   const [deleting, setDeleting] = useState(false);
-  const [startDate, setStartDate] = useState<string>(() => startOfTodayLocal());
-  const [endDate, setEndDate] = useState<string>(() => endOfTodayLocal());
+  const [startDate, setStartDate] = useState<string>(
+    () => getInitialDateRange().startDate,
+  );
+  const [endDate, setEndDate] = useState<string>(
+    () => getInitialDateRange().endDate,
+  );
+
+  useEffect(() => {
+    saveDateRangeCache({ startDate, endDate });
+  }, [startDate, endDate]);
 
   const hasDateFilter = Boolean(startDate || endDate);
 
@@ -116,6 +108,12 @@ export function GameListPage() {
   const clearDateFilter = () => {
     setStartDate('');
     setEndDate('');
+  };
+
+  const setTodayFilter = () => {
+    const today = todayDateRange();
+    setStartDate(today.startDate);
+    setEndDate(today.endDate);
   };
 
   const openDeleteModal = () => {
@@ -199,7 +197,15 @@ export function GameListPage() {
           onChange={(e) => setEndDate(e.target.value)}
         />
       </FormControl>
-      <Flex gap={3} align="flex-end">
+      <Flex gap={3} align="flex-end" flexWrap="wrap">
+        <Button
+          variant="outline"
+          colorScheme="teal"
+          onClick={setTodayFilter}
+          flex={{ base: 1, sm: 'none' }}
+        >
+          {az.gameList.today}
+        </Button>
         <Button
           variant="outline"
           onClick={clearDateFilter}

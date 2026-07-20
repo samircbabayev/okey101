@@ -22,12 +22,17 @@ import {
   Wrap,
   WrapItem,
 } from '@chakra-ui/react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ErrorState, LoadingState } from '../components/LoadingState';
 import { PageLayout } from '../components/PageLayout';
 import { useDailyStats } from '../hooks/useDailyStats';
 import { az } from '../i18n/az';
 import { PenaltyReason, type PlayerDayStats } from '../types';
+import {
+  getInitialDateRange,
+  saveDateRangeCache,
+  todayDateRange,
+} from '../utils/dateRangeCache';
 import { getPenaltyReasonLabel, PENALTY_REASONS } from '../utils/penaltyLabels';
 import {
   getBiggestDebtor,
@@ -43,26 +48,6 @@ import {
   getWinlessPlayers,
   lossCount,
 } from '../utils/statsCalculations';
-
-function pad2(n: number): string {
-  return String(n).padStart(2, '0');
-}
-
-function toDateTimeLocalValue(date: Date): string {
-  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}T${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
-}
-
-function startOfTodayLocal(): string {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  return toDateTimeLocalValue(d);
-}
-
-function endOfTodayLocal(): string {
-  const d = new Date();
-  d.setHours(23, 59, 0, 0);
-  return toDateTimeLocalValue(d);
-}
 
 function ReasonBadges({ stats }: { stats: PlayerDayStats }) {
   const active = PENALTY_REASONS.filter(
@@ -165,10 +150,18 @@ function FunCard({
 }
 
 export function StatsPage() {
-  const [startDate, setStartDate] = useState<string>(() => startOfTodayLocal());
-  const [endDate, setEndDate] = useState<string>(() => endOfTodayLocal());
+  const [startDate, setStartDate] = useState<string>(
+    () => getInitialDateRange().startDate,
+  );
+  const [endDate, setEndDate] = useState<string>(
+    () => getInitialDateRange().endDate,
+  );
   const hasDateFilter = Boolean(startDate || endDate);
   const { stats, gameCount, loading, error } = useDailyStats(startDate, endDate);
+
+  useEffect(() => {
+    saveDateRangeCache({ startDate, endDate });
+  }, [startDate, endDate]);
 
   const champion = useMemo(() => getDayChampion(stats), [stats]);
   const topPenalty = useMemo(() => getTopPenaltyPlayer(stats), [stats]);
@@ -181,6 +174,12 @@ export function StatsPage() {
   const master202 = useMemo(() => get202Master(stats), [stats]);
   const cleanPlayer = useMemo(() => getCleanPlayer(stats), [stats]);
   const specialists = useMemo(() => getReasonSpecialists(stats), [stats]);
+
+  const setTodayFilter = () => {
+    const today = todayDateRange();
+    setStartDate(today.startDate);
+    setEndDate(today.endDate);
+  };
 
   const filterBar = (
     <Flex
@@ -210,17 +209,27 @@ export function StatsPage() {
           onChange={(e) => setEndDate(e.target.value)}
         />
       </FormControl>
-      <Button
-        variant="outline"
-        onClick={() => {
-          setStartDate('');
-          setEndDate('');
-        }}
-        isDisabled={!hasDateFilter}
-        w={{ base: 'full', sm: 'auto' }}
-      >
-        {az.stats.allDates}
-      </Button>
+      <Flex gap={3} align="flex-end">
+        <Button
+          variant="outline"
+          colorScheme="teal"
+          onClick={setTodayFilter}
+          flex={{ base: 1, sm: 'none' }}
+        >
+          {az.stats.today}
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => {
+            setStartDate('');
+            setEndDate('');
+          }}
+          isDisabled={!hasDateFilter}
+          flex={{ base: 1, sm: 'none' }}
+        >
+          {az.stats.allDates}
+        </Button>
+      </Flex>
     </Flex>
   );
 
