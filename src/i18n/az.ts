@@ -237,7 +237,10 @@ export const az = {
     teamTotals: 'Komanda xalları',
     grandTotal: 'Ümumi',
     winner: 'Qalib',
-    winnerPoints: (team: string, points: number) => `${team} — ${points} xal`,
+    winnerPoints: (team: string, players: string, points: number, margin: number) =>
+      players
+        ? `${team} (${players}) — ${points} xal (${margin} xal fərq ilə)`
+        : `${team} — ${points} xal (${margin} xal fərq ilə)`,
     lowestWins: 'Avtomatik: ən az xal qazanır',
     winnerManual: 'Qalib əl ilə seçildi',
     draw: 'Bərabərlik',

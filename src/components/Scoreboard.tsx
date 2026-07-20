@@ -22,6 +22,7 @@ import { az } from '../i18n/az';
 import { GameStatus, type Game, type PlayerTotals, type TeamTotals } from '../types';
 import {
   getLeadStatus,
+  getWinMargin,
   isTiedGame,
   resolveWinningTeam,
 } from '../utils/scoreCalculations';
@@ -88,6 +89,14 @@ export function Scoreboard({ playerTotals, teamTotals, game }: ScoreboardProps) 
       .filter((pt) => pt.teamId === teamId)
       .map((pt) => pt.playerName)
       .join(', ');
+
+  const winnerPlayers = winner
+    ? playerTotals
+        .filter((pt) => pt.teamId === winner.teamId)
+        .map((pt) => pt.playerName)
+        .join(' ')
+    : '';
+  const winMargin = winner ? getWinMargin(winner, teamTotals) : 0;
 
   return (
     <Stack spacing={6}>
@@ -162,7 +171,12 @@ export function Scoreboard({ playerTotals, teamTotals, game }: ScoreboardProps) 
                 {az.scoreboard.winner}
               </Badge>
               <Text fontWeight="bold" color="green.700" fontSize={{ base: 'sm', md: 'md' }}>
-                {az.scoreboard.winnerPoints(winner.teamName, winner.grandTotal)}
+                {az.scoreboard.winnerPoints(
+                  winner.teamName,
+                  winnerPlayers,
+                  winner.grandTotal,
+                  winMargin,
+                )}
               </Text>
               <Text fontSize="sm" color="green.600">
                 {game.winner_team_id

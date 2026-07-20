@@ -105,6 +105,22 @@ export function getLeadStatus(teamTotals: TeamTotals[]): LeadStatus | null {
   return { tie: false, leaderName: sorted[0].teamName, margin };
 }
 
+/** Point gap between the winning team and its closest rival (by score). */
+export function getWinMargin(
+  winner: TeamTotals,
+  teamTotals: TeamTotals[],
+): number {
+  const others = teamTotals.filter((t) => t.teamId !== winner.teamId);
+  if (others.length === 0) return 0;
+  const closest = others.reduce((best, t) =>
+    Math.abs(t.grandTotal - winner.grandTotal) <
+    Math.abs(best.grandTotal - winner.grandTotal)
+      ? t
+      : best,
+  );
+  return Math.abs(closest.grandTotal - winner.grandTotal);
+}
+
 export function resolveWinningTeam(
   game: Pick<Game, 'status' | 'winner_team_id'>,
   teamTotals: TeamTotals[],
