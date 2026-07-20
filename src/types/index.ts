@@ -135,6 +135,8 @@ export interface PlayerDayStats {
   penaltyCount: number;
   penaltyByReason: Record<PenaltyReason, number>;
   maxSinglePenalty: number;
+  score202Count: number;
+  cleanRounds: number;
   roundsPlayed: number;
   timesStartedFirst: number;
   bestGame: number | null;

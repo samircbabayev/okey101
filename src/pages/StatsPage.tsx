@@ -1,6 +1,7 @@
 import {
   Badge,
   Box,
+  Button,
   Card,
   CardBody,
   Divider,
@@ -32,6 +33,8 @@ import {
   getBiggestDebtor,
   getBiggestLoser,
   getBiggestSinglePenalty,
+  get202Master,
+  getCleanPlayer,
   getDayChampion,
   getDisasterGame,
   getMistakeMachine,
@@ -41,11 +44,24 @@ import {
   lossCount,
 } from '../utils/statsCalculations';
 
-function toDateInputValue(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+function pad2(n: number): string {
+  return String(n).padStart(2, '0');
+}
+
+function toDateTimeLocalValue(date: Date): string {
+  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}T${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
+}
+
+function startOfTodayLocal(): string {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return toDateTimeLocalValue(d);
+}
+
+function endOfTodayLocal(): string {
+  const d = new Date();
+  d.setHours(23, 59, 0, 0);
+  return toDateTimeLocalValue(d);
 }
 
 function ReasonBadges({ stats }: { stats: PlayerDayStats }) {
@@ -149,8 +165,10 @@ function FunCard({
 }
 
 export function StatsPage() {
-  const [date, setDate] = useState<string>(() => toDateInputValue(new Date()));
-  const { stats, gameCount, loading, error } = useDailyStats(date);
+  const [startDate, setStartDate] = useState<string>(() => startOfTodayLocal());
+  const [endDate, setEndDate] = useState<string>(() => endOfTodayLocal());
+  const hasDateFilter = Boolean(startDate || endDate);
+  const { stats, gameCount, loading, error } = useDailyStats(startDate, endDate);
 
   const champion = useMemo(() => getDayChampion(stats), [stats]);
   const topPenalty = useMemo(() => getTopPenaltyPlayer(stats), [stats]);
@@ -160,15 +178,50 @@ export function StatsPage() {
   const mistakeMachine = useMemo(() => getMistakeMachine(stats), [stats]);
   const debtor = useMemo(() => getBiggestDebtor(stats), [stats]);
   const biggestHit = useMemo(() => getBiggestSinglePenalty(stats), [stats]);
+  const master202 = useMemo(() => get202Master(stats), [stats]);
+  const cleanPlayer = useMemo(() => getCleanPlayer(stats), [stats]);
   const specialists = useMemo(() => getReasonSpecialists(stats), [stats]);
 
   const filterBar = (
-    <FormControl maxW={{ sm: '220px' }} mb={5}>
-      <FormLabel fontSize="sm" mb={1}>
-        {az.stats.filterDate}
-      </FormLabel>
-      <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-    </FormControl>
+    <Flex
+      gap={3}
+      mb={5}
+      align={{ base: 'stretch', sm: 'flex-end' }}
+      direction={{ base: 'column', sm: 'row' }}
+      flexWrap="wrap"
+    >
+      <FormControl maxW={{ sm: '240px' }}>
+        <FormLabel fontSize="sm" mb={1}>
+          {az.stats.filterStart}
+        </FormLabel>
+        <Input
+          type="datetime-local"
+          value={startDate}
+          onChange={(e) => setStartDate(e.target.value)}
+        />
+      </FormControl>
+      <FormControl maxW={{ sm: '240px' }}>
+        <FormLabel fontSize="sm" mb={1}>
+          {az.stats.filterEnd}
+        </FormLabel>
+        <Input
+          type="datetime-local"
+          value={endDate}
+          onChange={(e) => setEndDate(e.target.value)}
+        />
+      </FormControl>
+      <Button
+        variant="outline"
+        onClick={() => {
+          setStartDate('');
+          setEndDate('');
+        }}
+        isDisabled={!hasDateFilter}
+        w={{ base: 'full', sm: 'auto' }}
+      >
+        {az.stats.allDates}
+      </Button>
+    </Flex>
   );
 
   return (
@@ -279,6 +332,22 @@ export function StatsPage() {
                     colorScheme="red"
                     name={biggestHit.name}
                     subtitle={az.stats.biggestHitHint(biggestHit.maxSinglePenalty)}
+                  />
+                )}
+                {master202 && (
+                  <FunCard
+                    title={az.stats.master202}
+                    colorScheme="orange"
+                    name={master202.name}
+                    subtitle={az.stats.master202Hint(master202.score202Count)}
+                  />
+                )}
+                {cleanPlayer && (
+                  <FunCard
+                    title={az.stats.cleanPlayer}
+                    colorScheme="green"
+                    name={cleanPlayer.name}
+                    subtitle={az.stats.cleanPlayerHint(cleanPlayer.cleanRounds)}
                   />
                 )}
               </SimpleGrid>

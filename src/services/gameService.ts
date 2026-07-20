@@ -206,17 +206,23 @@ async function computeWinners(
   return winnerByGameId;
 }
 
-export async function fetchDailyGameData(date: string): Promise<GameData[]> {
-  const start = new Date(`${date}T00:00:00`);
-  const end = new Date(start);
-  end.setDate(end.getDate() + 1);
-
-  const { data: games, error: gamesError } = await supabase
+export async function fetchGameDataInRange(
+  startDateLocal: string,
+  endDateLocal: string,
+): Promise<GameData[]> {
+  let query = supabase
     .from('games')
     .select('*')
-    .gte('created_at', start.toISOString())
-    .lt('created_at', end.toISOString())
     .order('created_at', { ascending: true });
+
+  if (startDateLocal) {
+    query = query.gte('created_at', new Date(startDateLocal).toISOString());
+  }
+  if (endDateLocal) {
+    query = query.lte('created_at', new Date(endDateLocal).toISOString());
+  }
+
+  const { data: games, error: gamesError } = await query;
 
   if (gamesError) throw gamesError;
 

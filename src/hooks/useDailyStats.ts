@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { fetchDailyGameData } from '../services/gameService';
+import { fetchGameDataInRange } from '../services/gameService';
 import type { GameData, PlayerDayStats } from '../types';
 import { calculateDailyStats } from '../utils/statsCalculations';
 
@@ -11,30 +11,27 @@ interface UseDailyStatsResult {
   refetch: () => Promise<void>;
 }
 
-export function useDailyStats(date: string): UseDailyStatsResult {
+export function useDailyStats(
+  startDate: string,
+  endDate: string,
+): UseDailyStatsResult {
   const [gamesData, setGamesData] = useState<GameData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const refetch = useCallback(async () => {
-    if (!date) {
-      setGamesData([]);
-      setLoading(false);
-      return;
-    }
-
     setLoading(true);
     setError(null);
 
     try {
-      const result = await fetchDailyGameData(date);
+      const result = await fetchGameDataInRange(startDate, endDate);
       setGamesData(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Statistika yüklənmədi');
     } finally {
       setLoading(false);
     }
-  }, [date]);
+  }, [startDate, endDate]);
 
   useEffect(() => {
     refetch();

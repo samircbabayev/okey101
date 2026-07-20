@@ -82,9 +82,10 @@ export const az = {
     notStarted: 'Başlamayıb',
     roundInProgress: (n: number) => `${azOrdinal(n)} raund davam edir`,
     roundsCompleted: (done: number, total: number) => `${done}/${total} raund bitib`,
-    filterDate: 'Tarix',
+    filterStart: 'Başlanğıc',
+    filterEnd: 'Son',
     allDates: 'Hamısı',
-    noGamesForDate: 'Bu tarixdə oyun yoxdur.',
+    noGamesForDate: 'Bu aralıqda oyun yoxdur.',
     deleteToday: 'Bugünkü oyunları sil',
     deleteTodayTitle: 'Bugünkü oyunları sil',
     deleteTodayBody:
@@ -100,10 +101,12 @@ export const az = {
 
   stats: {
     title: 'Statistika',
-    subtitle: 'Günlük oyunçu statistikası',
+    subtitle: 'Oyunçu statistikası',
     loading: 'Statistika yüklənir...',
-    filterDate: 'Tarix',
-    empty: 'Bu tarixdə oyun yoxdur.',
+    filterStart: 'Başlanğıc',
+    filterEnd: 'Son',
+    allDates: 'Hamısı',
+    empty: 'Bu aralıqda oyun yoxdur.',
     champion: 'Günün çempionu',
     championHint: 'Ən çox qalibiyyət',
     topPenalty: 'Ən çox cərimə sayı',
@@ -141,6 +144,10 @@ export const az = {
     debtorHint: (points: number) => `${points} cərimə xalı`,
     biggestHit: 'Ən ağır zərbə',
     biggestHitHint: (points: number) => `Tək cərimə: +${points}`,
+    master202: '202 ustası',
+    master202Hint: (n: number) => `${n} dəfə 202 xal`,
+    cleanPlayer: 'Təmiz oyunçu',
+    cleanPlayerHint: (n: number) => `${n} raund cəriməsiz`,
   },
 
   createGame: {

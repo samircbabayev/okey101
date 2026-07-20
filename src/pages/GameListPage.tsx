@@ -32,11 +32,25 @@ import { GameStatus, type GameListItem } from '../types';
 
 const DELETE_PASSWORD = 'samir1234';
 
-function toDateInputValue(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+function pad2(n: number): string {
+  return String(n).padStart(2, '0');
+}
+
+/** Local datetime value for <input type="datetime-local" /> */
+function toDateTimeLocalValue(date: Date): string {
+  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}T${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
+}
+
+function startOfTodayLocal(): string {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return toDateTimeLocalValue(d);
+}
+
+function endOfTodayLocal(): string {
+  const d = new Date();
+  d.setHours(23, 59, 0, 0);
+  return toDateTimeLocalValue(d);
 }
 
 function getProgressLabel(item: GameListItem): string {
@@ -65,10 +79,12 @@ function getActionLabel(item: GameListItem): string {
 }
 
 function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('az-AZ', {
+  return new Date(dateStr).toLocaleString('az-AZ', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   });
 }
 
@@ -78,16 +94,29 @@ export function GameListPage() {
   const deleteModal = useDisclosure();
   const [password, setPassword] = useState('');
   const [deleting, setDeleting] = useState(false);
-  const [dateFilter, setDateFilter] = useState<string>(() =>
-    toDateInputValue(new Date()),
-  );
+  const [startDate, setStartDate] = useState<string>(() => startOfTodayLocal());
+  const [endDate, setEndDate] = useState<string>(() => endOfTodayLocal());
+
+  const hasDateFilter = Boolean(startDate || endDate);
 
   const filteredGames = useMemo(() => {
-    if (!dateFilter) return games;
-    return games.filter(
-      (item) => toDateInputValue(new Date(item.game.created_at)) === dateFilter,
-    );
-  }, [games, dateFilter]);
+    if (!hasDateFilter) return games;
+
+    const startMs = startDate ? new Date(startDate).getTime() : null;
+    const endMs = endDate ? new Date(endDate).getTime() : null;
+
+    return games.filter((item) => {
+      const createdMs = new Date(item.game.created_at).getTime();
+      if (startMs !== null && createdMs < startMs) return false;
+      if (endMs !== null && createdMs > endMs) return false;
+      return true;
+    });
+  }, [games, startDate, endDate, hasDateFilter]);
+
+  const clearDateFilter = () => {
+    setStartDate('');
+    setEndDate('');
+  };
 
   const openDeleteModal = () => {
     setPassword('');
@@ -148,22 +177,33 @@ export function GameListPage() {
       mb={4}
       align={{ base: 'stretch', sm: 'flex-end' }}
       direction={{ base: 'column', sm: 'row' }}
+      flexWrap="wrap"
     >
-      <FormControl maxW={{ sm: '220px' }}>
+      <FormControl maxW={{ sm: '240px' }}>
         <FormLabel fontSize="sm" mb={1}>
-          {az.gameList.filterDate}
+          {az.gameList.filterStart}
         </FormLabel>
         <Input
-          type="date"
-          value={dateFilter}
-          onChange={(e) => setDateFilter(e.target.value)}
+          type="datetime-local"
+          value={startDate}
+          onChange={(e) => setStartDate(e.target.value)}
+        />
+      </FormControl>
+      <FormControl maxW={{ sm: '240px' }}>
+        <FormLabel fontSize="sm" mb={1}>
+          {az.gameList.filterEnd}
+        </FormLabel>
+        <Input
+          type="datetime-local"
+          value={endDate}
+          onChange={(e) => setEndDate(e.target.value)}
         />
       </FormControl>
       <Flex gap={3} align="flex-end">
         <Button
           variant="outline"
-          onClick={() => setDateFilter('')}
-          isDisabled={!dateFilter}
+          onClick={clearDateFilter}
+          isDisabled={!hasDateFilter}
           flex={{ base: 1, sm: 'none' }}
         >
           {az.gameList.allDates}

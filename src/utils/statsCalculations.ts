@@ -32,6 +32,8 @@ function createStats(name: string): MutableStats {
     penaltyCount: 0,
     penaltyByReason: emptyReasonRecord(),
     maxSinglePenalty: 0,
+    score202Count: 0,
+    cleanRounds: 0,
     roundsPlayed: 0,
     timesStartedFirst: 0,
     bestGame: null,
@@ -91,7 +93,14 @@ export function calculateDailyStats(gamesData: GameData[]): PlayerDayStats[] {
     for (const score of scores) {
       const player = playerById.get(score.player_id);
       if (!player) continue;
-      getStats(player.name).roundsPlayed += 1;
+      const stats = getStats(player.name);
+      stats.roundsPlayed += 1;
+      if (score.points === 202) {
+        stats.score202Count += 1;
+      }
+      if (score.penalty_points === 0) {
+        stats.cleanRounds += 1;
+      }
     }
 
     for (const round of rounds) {
@@ -217,6 +226,27 @@ export function getBiggestSinglePenalty(
   return withHits.reduce((max, s) =>
     s.maxSinglePenalty > max.maxSinglePenalty ? s : max,
   );
+}
+
+export function get202Master(stats: PlayerDayStats[]): PlayerDayStats | null {
+  const with202 = stats.filter((s) => s.score202Count > 0);
+  if (with202.length === 0) return null;
+  return [...with202].sort((a, b) => {
+    if (b.score202Count !== a.score202Count) {
+      return b.score202Count - a.score202Count;
+    }
+    return a.name.localeCompare(b.name);
+  })[0];
+}
+
+export function getCleanPlayer(stats: PlayerDayStats[]): PlayerDayStats | null {
+  const withClean = stats.filter((s) => s.cleanRounds > 0);
+  if (withClean.length === 0) return null;
+  return [...withClean].sort((a, b) => {
+    if (b.cleanRounds !== a.cleanRounds) return b.cleanRounds - a.cleanRounds;
+    if (a.penaltyCount !== b.penaltyCount) return a.penaltyCount - b.penaltyCount;
+    return a.name.localeCompare(b.name);
+  })[0];
 }
 
 export interface ReasonSpecialist {
