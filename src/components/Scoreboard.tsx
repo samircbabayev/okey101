@@ -90,11 +90,15 @@ export function Scoreboard({ playerTotals, teamTotals, game }: ScoreboardProps) 
       .map((pt) => pt.playerName)
       .join(', ');
 
+  const isGenericTeamName = (name: string) => /^Komanda \d+$/.test(name);
+
   const winnerPlayers = winner
-    ? playerTotals
-        .filter((pt) => pt.teamId === winner.teamId)
-        .map((pt) => pt.playerName)
-        .join(' ')
+    ? isGenericTeamName(winner.teamName)
+      ? playerTotals
+          .filter((pt) => pt.teamId === winner.teamId)
+          .map((pt) => pt.playerName)
+          .join(' ')
+      : ''
     : '';
   const winMargin = winner ? getWinMargin(winner, teamTotals) : 0;
 
@@ -119,7 +123,7 @@ export function Scoreboard({ playerTotals, teamTotals, game }: ScoreboardProps) 
               >
                 <Box minW={0}>
                   <Text fontWeight="medium">{tt.teamName}</Text>
-                  {teamMembers(tt.teamId) && (
+                  {isGenericTeamName(tt.teamName) && teamMembers(tt.teamId) && (
                     <Text fontSize="xs" color="gray.500">
                       {teamMembers(tt.teamId)}
                     </Text>
@@ -143,7 +147,7 @@ export function Scoreboard({ playerTotals, teamTotals, game }: ScoreboardProps) 
                   <Tr key={tt.teamId}>
                     <Td>
                       <Text fontWeight="medium">{tt.teamName}</Text>
-                      {teamMembers(tt.teamId) && (
+                      {isGenericTeamName(tt.teamName) && teamMembers(tt.teamId) && (
                         <Text fontSize="xs" color="gray.500">
                           {teamMembers(tt.teamId)}
                         </Text>

@@ -12,6 +12,7 @@ function emptyReasonRecord(): Record<PenaltyReason, number> {
     [PenaltyReason.FalseOpen]: 0,
     [PenaltyReason.GiveTile]: 0,
     [PenaltyReason.JokerDiscard]: 0,
+    [PenaltyReason.JokerLost]: 0,
     [PenaltyReason.Other]: 0,
   };
 }
@@ -263,6 +264,7 @@ export function getReasonSpecialists(
     PenaltyReason.FalseOpen,
     PenaltyReason.GiveTile,
     PenaltyReason.JokerDiscard,
+    PenaltyReason.JokerLost,
     PenaltyReason.Other,
   ];
 

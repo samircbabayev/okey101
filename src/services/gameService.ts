@@ -22,9 +22,17 @@ import {
 } from '../utils/scoreCalculations';
 import { supabase } from './supabaseClient';
 
-function teamNumberFromName(name: string): number {
-  const match = name.match(/^Komanda (\d+)$/);
-  return match ? parseInt(match[1], 10) : 0;
+function teamNameFromPlayers(
+  teamNumber: number,
+  players: CreateGameInput['players'],
+): string {
+  const names = players
+    .filter((p) => p.teamNumber === teamNumber)
+    .sort((a, b) => a.turnOrder - b.turnOrder)
+    .map((p) => p.name.trim())
+    .filter(Boolean);
+
+  return names.length > 0 ? names.join(' · ') : `Komanda ${teamNumber}`;
 }
 
 function startingPlayerIdForRound(
@@ -308,22 +316,22 @@ export async function createGame(input: CreateGameInput): Promise<string> {
 
   const gameId = game.id as string;
 
-  const teamRows = Array.from({ length: input.teamCount }, (_, i) => ({
-    game_id: gameId,
-    name: `Komanda ${i + 1}`,
-  }));
+  const teamIdByNumber = new Map<number, string>();
 
-  const { data: teams, error: teamsError } = await supabase
-    .from('teams')
-    .insert(teamRows)
-    .select('id, name');
+  for (let n = 1; n <= input.teamCount; n++) {
+    const { data: team, error: teamError } = await supabase
+      .from('teams')
+      .insert({
+        game_id: gameId,
+        name: teamNameFromPlayers(n, input.players),
+      })
+      .select('id')
+      .single();
 
-  if (teamsError) throw teamsError;
-  if (!teams) throw new Error('Failed to create teams');
-
-  const teamIdByNumber = new Map(
-    teams.map((t) => [teamNumberFromName(t.name as string), t.id as string]),
-  );
+    if (teamError) throw teamError;
+    if (!team) throw new Error('Failed to create team');
+    teamIdByNumber.set(n, team.id as string);
+  }
 
   const playerRows = input.players.map((p) => ({
     game_id: gameId,

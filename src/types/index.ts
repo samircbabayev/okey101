@@ -8,6 +8,7 @@ export enum PenaltyReason {
   FalseOpen = 'FALSE_OPEN',
   GiveTile = 'GIVE_TILE',
   JokerDiscard = 'JOKER_DISCARD',
+  JokerLost = 'JOKER_LOST',
   Other = 'OTHER',
 }
 

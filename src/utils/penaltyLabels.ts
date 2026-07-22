@@ -6,6 +6,7 @@ export const PENALTY_REASONS: { value: PenaltyReason; label: string }[] = [
   PenaltyReason.FalseOpen,
   PenaltyReason.GiveTile,
   PenaltyReason.JokerDiscard,
+  PenaltyReason.JokerLost,
   PenaltyReason.Other,
 ].map((value) => ({ value, label: PENALTY_REASON_LABELS[value] }));
 

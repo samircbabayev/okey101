@@ -226,7 +226,8 @@ export function GameListPage() {
                           <Text fontSize="sm" fontWeight="medium">
                             {item.winnerTeamName}
                           </Text>
-                          {item.winnerPlayerNames.length > 0 && (
+                          {/^Komanda \d+$/.test(item.winnerTeamName) &&
+                            item.winnerPlayerNames.length > 0 && (
                             <Text fontSize="sm" color="gray.600">
                               ({item.winnerPlayerNames.join(', ')})
                             </Text>

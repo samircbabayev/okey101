@@ -296,6 +296,7 @@ export const PENALTY_REASON_LABELS: Record<PenaltyReason, string> = {
   [PenaltyReason.FalseOpen]: 'Səhv açmaq',
   [PenaltyReason.GiveTile]: 'Daş vermək',
   [PenaltyReason.JokerDiscard]: 'Kozr atmaq',
+  [PenaltyReason.JokerLost]: 'Kozr itirmək',
   [PenaltyReason.Other]: 'Digər',
 };
 
