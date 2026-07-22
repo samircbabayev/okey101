@@ -42,6 +42,7 @@ import {
   getCleanPlayer,
   getDayChampion,
   getDisasterGame,
+  getIndependentWinner,
   getMistakeMachine,
   getReasonSpecialists,
   getTopPenaltyPlayer,
@@ -164,6 +165,7 @@ export function StatsPage() {
   }, [startDate, endDate]);
 
   const champion = useMemo(() => getDayChampion(stats), [stats]);
+  const independentWinner = useMemo(() => getIndependentWinner(stats), [stats]);
   const topPenalty = useMemo(() => getTopPenaltyPlayer(stats), [stats]);
   const loser = useMemo(() => getBiggestLoser(stats), [stats]);
   const winless = useMemo(() => getWinlessPlayers(stats), [stats]);
@@ -249,7 +251,7 @@ export function StatsPage() {
         </Card>
       ) : (
         <Stack spacing={5}>
-          <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={4}>
+          <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} spacing={4}>
             {champion && (
               <Card bg="teal.50" borderWidth="1px" borderColor="teal.200">
                 <CardBody>
@@ -261,6 +263,24 @@ export function StatsPage() {
                   </Text>
                   <Text fontSize="sm" color="teal.700">
                     {champion.wins} {az.stats.wins} · {az.stats.avg} {champion.avgScore}
+                  </Text>
+                </CardBody>
+              </Card>
+            )}
+            {independentWinner && (
+              <Card bg="cyan.50" borderWidth="1px" borderColor="cyan.200">
+                <CardBody>
+                  <Badge colorScheme="cyan" mb={1}>
+                    {az.stats.independentWinner}
+                  </Badge>
+                  <Text fontWeight="bold" fontSize="lg">
+                    {independentWinner.name}
+                  </Text>
+                  <Text fontSize="sm" color="cyan.700">
+                    {az.stats.independentWinnerHint(
+                      independentWinner.avgScore,
+                      independentWinner.gamesPlayed,
+                    )}
                   </Text>
                 </CardBody>
               </Card>
@@ -277,6 +297,21 @@ export function StatsPage() {
                   <Text fontSize="sm" color="orange.700">
                     {topPenalty.penaltyCount} {az.stats.penaltyCount} ·{' '}
                     {topPenalty.penaltyTotal} {az.stats.penaltyPoints}
+                  </Text>
+                </CardBody>
+              </Card>
+            )}
+            {cleanPlayer && (
+              <Card bg="green.50" borderWidth="1px" borderColor="green.200">
+                <CardBody>
+                  <Badge colorScheme="green" mb={1}>
+                    {az.stats.cleanPlayer}
+                  </Badge>
+                  <Text fontWeight="bold" fontSize="lg">
+                    {cleanPlayer.name}
+                  </Text>
+                  <Text fontSize="sm" color="green.700">
+                    {az.stats.cleanPlayerHint(cleanPlayer.cleanRounds)}
                   </Text>
                 </CardBody>
               </Card>
@@ -349,14 +384,6 @@ export function StatsPage() {
                     colorScheme="orange"
                     name={master202.name}
                     subtitle={az.stats.master202Hint(master202.score202Count)}
-                  />
-                )}
-                {cleanPlayer && (
-                  <FunCard
-                    title={az.stats.cleanPlayer}
-                    colorScheme="green"
-                    name={cleanPlayer.name}
-                    subtitle={az.stats.cleanPlayerHint(cleanPlayer.cleanRounds)}
                   />
                 )}
               </SimpleGrid>

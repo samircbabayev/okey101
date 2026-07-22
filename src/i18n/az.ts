@@ -100,6 +100,9 @@ export const az = {
     empty: 'Bu aralıqda oyun yoxdur.',
     champion: 'Günün çempionu',
     championHint: 'Ən çox qalibiyyət',
+    independentWinner: 'Nezavisimiy qalib',
+    independentWinnerHint: (avg: number, games: number) =>
+      `Orta ${avg} xal · ${games} oyun`,
     topPenalty: 'Ən çox cərimə sayı',
     leaderboard: 'Reytinq',
     player: 'Oyunçu',

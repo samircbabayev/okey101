@@ -155,6 +155,19 @@ export function getDayChampion(stats: PlayerDayStats[]): PlayerDayStats | null {
   return champion.wins > 0 ? champion : null;
 }
 
+/** Lowest average points in range — ignores win count (unlike champion). */
+export function getIndependentWinner(
+  stats: PlayerDayStats[],
+): PlayerDayStats | null {
+  const played = stats.filter((s) => s.gamesPlayed > 0);
+  if (played.length === 0) return null;
+  return [...played].sort((a, b) => {
+    if (a.avgScore !== b.avgScore) return a.avgScore - b.avgScore;
+    if (a.grandTotal !== b.grandTotal) return a.grandTotal - b.grandTotal;
+    return a.name.localeCompare(b.name);
+  })[0];
+}
+
 export function getTopPenaltyPlayer(
   stats: PlayerDayStats[],
 ): PlayerDayStats | null {

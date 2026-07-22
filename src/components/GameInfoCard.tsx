@@ -117,34 +117,28 @@ export function GameInfoCard({ game, rounds, teamTotals }: GameInfoCardProps) {
         </SimpleGrid>
 
         {lead && (
-          <Flex
+          <Button
             mt={3}
-            align="center"
-            justify="space-between"
-            gap={2}
+            w="full"
+            h="auto"
+            py={2.5}
             px={3}
-            py={1.5}
-            borderRadius="lg"
-            bg="gray.50"
+            borderRadius="xl"
+            variant="solid"
+            colorScheme="teal"
+            fontWeight="semibold"
+            fontSize="sm"
+            whiteSpace="normal"
+            textAlign="left"
+            justifyContent="flex-start"
+            lineHeight="short"
+            aria-label={az.game.speak}
+            onClick={() => {
+              if (isSpeechSupported()) speak(leadText);
+            }}
           >
-            <Text fontSize="xs" color="gray.600" fontWeight="medium" noOfLines={1}>
-              {leadText}
-            </Text>
-            {isSpeechSupported() && (
-              <Button
-                size="xs"
-                variant="solid"
-                colorScheme="teal"
-                flexShrink={0}
-                borderRadius="full"
-                px={2.5}
-                aria-label={az.game.speak}
-                onClick={() => speak(leadText)}
-              >
-                🔊 {az.game.speak}
-              </Button>
-            )}
-          </Flex>
+            🔊 {leadText}
+          </Button>
         )}
       </CardBody>
     </Card>
