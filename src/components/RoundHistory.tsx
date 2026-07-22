@@ -4,7 +4,9 @@ import {
   Card,
   CardBody,
   CardHeader,
+  Divider,
   Heading,
+  SimpleGrid,
   Stack,
   Text,
 } from '@chakra-ui/react';
@@ -67,6 +69,66 @@ function cumulativeTeamTotalsAfterRound(
     }));
 }
 
+function teamTotalsForRound(
+  roundId: string,
+  teams: Team[],
+  players: Player[],
+  scores: Score[],
+): TeamRunningTotal[] {
+  const teamIdByPlayer = new Map(
+    players.map((p) => [p.id, p.team_id ?? '']),
+  );
+  const totals = new Map<string, number>();
+  for (const team of teams) {
+    totals.set(team.id, 0);
+  }
+
+  for (const score of scores) {
+    if (score.round_id !== roundId) continue;
+    const teamId = teamIdByPlayer.get(score.player_id);
+    if (!teamId || !totals.has(teamId)) continue;
+    totals.set(
+      teamId,
+      (totals.get(teamId) ?? 0) + score.points + score.penalty_points,
+    );
+  }
+
+  return [...teams]
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map((team) => ({
+      teamId: team.id,
+      teamName: team.name,
+      total: totals.get(team.id) ?? 0,
+    }));
+}
+
+function scoresGroupedByTeam(
+  roundScores: Score[],
+  teams: Team[],
+  players: Player[],
+): { teamId: string; teamName: string; scores: Score[] }[] {
+  const playerById = new Map(players.map((p) => [p.id, p]));
+  const sortedTeams = [...teams].sort((a, b) => a.name.localeCompare(b.name));
+
+  return sortedTeams
+    .map((team) => {
+      const teamScores = roundScores
+        .filter((s) => playerById.get(s.player_id)?.team_id === team.id)
+        .sort((a, b) => {
+          const pa = playerById.get(a.player_id);
+          const pb = playerById.get(b.player_id);
+          return (pa?.turn_order ?? 0) - (pb?.turn_order ?? 0);
+        });
+
+      return {
+        teamId: team.id,
+        teamName: team.name,
+        scores: teamScores,
+      };
+    })
+    .filter((group) => group.scores.length > 0);
+}
+
 export function RoundHistory({
   rounds,
   teams,
@@ -122,6 +184,12 @@ export function RoundHistory({
               players,
               scores,
             );
+            const roundOnly = teamTotalsForRound(
+              round.id,
+              teams,
+              players,
+              scores,
+            );
 
             return (
               <Box
@@ -141,49 +209,39 @@ export function RoundHistory({
                   </Text>
                 )}
 
-                {running.length >= 2 && (
-                  <Box
-                    mb={3}
-                    px={3}
-                    py={2}
-                    borderRadius="md"
-                    bg="teal.50"
-                    borderWidth="1px"
-                    borderColor="teal.100"
-                  >
-                    <Text fontSize="xs" color="teal.700" textTransform="uppercase" mb={0.5}>
-                      {az.roundHistory.runningTotal}
-                    </Text>
-                    <Text fontWeight="bold" color="teal.800" fontSize={{ base: 'sm', md: 'md' }}>
-                      {running.map((t) => t.total).join(' vs ')}
-                    </Text>
-                    <Text fontSize="xs" color="teal.600">
-                      {running.map((t) => `${t.teamName}: ${t.total}`).join(' · ')}
-                    </Text>
-                  </Box>
-                )}
-
                 {roundScores.length > 0 && (
                   <Box mb={2}>
                     <Text fontSize="xs" color="gray.500" textTransform="uppercase" mb={1}>
                       {az.roundHistory.scores}
                     </Text>
-                    {roundScores.map((s) => {
-                      const player = playerById.get(s.player_id);
-                      return (
-                        <Text key={s.id} fontSize="sm">
-                          {player?.name ?? az.roundHistory.unknownPlayer}: {s.points}
-                          {s.penalty_points > 0
-                            ? ` ${az.roundHistory.penaltyExtra(s.penalty_points)}`
-                            : ''}
-                        </Text>
-                      );
-                    })}
+                    <Stack spacing={0}>
+                      {scoresGroupedByTeam(roundScores, teams, players).map(
+                        (group, groupIndex) => (
+                          <Box key={group.teamId}>
+                            {groupIndex > 0 && (
+                              <Divider my={2} borderColor="gray.200" />
+                            )}
+                            {group.scores.map((s) => {
+                              const player = playerById.get(s.player_id);
+                              return (
+                                <Text key={s.id} fontSize="sm">
+                                  {player?.name ?? az.roundHistory.unknownPlayer}:{' '}
+                                  {s.points}
+                                  {s.penalty_points > 0
+                                    ? ` ${az.roundHistory.penaltyExtra(s.penalty_points)}`
+                                    : ''}
+                                </Text>
+                              );
+                            })}
+                          </Box>
+                        ),
+                      )}
+                    </Stack>
                   </Box>
                 )}
 
                 {roundPenalties.length > 0 && (
-                  <Box>
+                  <Box mb={3}>
                     <Text fontSize="xs" color="gray.500" textTransform="uppercase" mb={1}>
                       {az.roundHistory.penalties}
                     </Text>
@@ -197,6 +255,84 @@ export function RoundHistory({
                         </Text>
                       );
                     })}
+                  </Box>
+                )}
+
+                {roundOnly.length >= 2 && (
+                  <Box
+                    mt={roundPenalties.length === 0 && roundScores.length > 0 ? 3 : 0}
+                    borderWidth="1px"
+                    borderColor="gray.200"
+                    borderRadius="md"
+                    overflow="hidden"
+                  >
+                    <SimpleGrid
+                      columns={roundOnly.length + 1}
+                      bg="gray.50"
+                      px={3}
+                      py={2}
+                      borderBottomWidth="1px"
+                      borderColor="gray.200"
+                    >
+                      <Text fontSize="xs" color="gray.500" />
+                      {roundOnly.map((t) => (
+                        <Text
+                          key={t.teamId}
+                          fontSize="xs"
+                          fontWeight="semibold"
+                          color="gray.700"
+                          textAlign="right"
+                          noOfLines={2}
+                        >
+                          {t.teamName}
+                        </Text>
+                      ))}
+                    </SimpleGrid>
+                    <SimpleGrid
+                      columns={roundOnly.length + 1}
+                      px={3}
+                      py={2}
+                      alignItems="center"
+                      borderBottomWidth="1px"
+                      borderColor="gray.100"
+                    >
+                      <Text fontSize="sm" color="gray.600">
+                        {az.roundHistory.roundTotal}
+                      </Text>
+                      {roundOnly.map((t) => (
+                        <Text
+                          key={t.teamId}
+                          fontSize="sm"
+                          fontWeight="bold"
+                          textAlign="right"
+                        >
+                          {t.total}
+                        </Text>
+                      ))}
+                    </SimpleGrid>
+                    {running.length >= 2 && (
+                      <SimpleGrid
+                        columns={running.length + 1}
+                        px={3}
+                        py={2}
+                        alignItems="center"
+                        bg="gray.50"
+                      >
+                        <Text fontSize="sm" color="gray.600">
+                          {az.roundHistory.runningTotal}
+                        </Text>
+                        {running.map((t) => (
+                          <Text
+                            key={t.teamId}
+                            fontSize="sm"
+                            fontWeight="bold"
+                            textAlign="right"
+                          >
+                            {t.total}
+                          </Text>
+                        ))}
+                      </SimpleGrid>
+                    )}
                   </Box>
                 )}
               </Box>
