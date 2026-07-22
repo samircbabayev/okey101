@@ -8,27 +8,84 @@ import {
   Stack,
   Text,
 } from '@chakra-ui/react';
+import { useMemo } from 'react';
 import { az } from '../i18n/az';
-import type { Penalty, Player, Round, Score } from '../types';
+import type { Penalty, Player, Round, Score, Team } from '../types';
 import { getPenaltyReasonLabel } from '../utils/penaltyLabels';
 
 interface RoundHistoryProps {
   rounds: Round[];
+  teams: Team[];
   players: Player[];
   scores: Score[];
   penalties: Penalty[];
 }
 
+interface TeamRunningTotal {
+  teamId: string;
+  teamName: string;
+  total: number;
+}
+
+function cumulativeTeamTotalsAfterRound(
+  upToRoundNumber: number,
+  rounds: Round[],
+  teams: Team[],
+  players: Player[],
+  scores: Score[],
+): TeamRunningTotal[] {
+  const roundIds = new Set(
+    rounds
+      .filter((r) => r.is_finished && r.round_number <= upToRoundNumber)
+      .map((r) => r.id),
+  );
+
+  const teamIdByPlayer = new Map(
+    players.map((p) => [p.id, p.team_id ?? '']),
+  );
+  const totals = new Map<string, number>();
+  for (const team of teams) {
+    totals.set(team.id, 0);
+  }
+
+  for (const score of scores) {
+    if (!roundIds.has(score.round_id)) continue;
+    const teamId = teamIdByPlayer.get(score.player_id);
+    if (!teamId || !totals.has(teamId)) continue;
+    totals.set(
+      teamId,
+      (totals.get(teamId) ?? 0) + score.points + score.penalty_points,
+    );
+  }
+
+  return [...teams]
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map((team) => ({
+      teamId: team.id,
+      teamName: team.name,
+      total: totals.get(team.id) ?? 0,
+    }));
+}
+
 export function RoundHistory({
   rounds,
+  teams,
   players,
   scores,
   penalties,
 }: RoundHistoryProps) {
-  const playerById = new Map(players.map((p) => [p.id, p]));
-  const finishedRounds = [...rounds]
-    .filter((r) => r.is_finished)
-    .sort((a, b) => b.round_number - a.round_number);
+  const playerById = useMemo(
+    () => new Map(players.map((p) => [p.id, p])),
+    [players],
+  );
+
+  const finishedRounds = useMemo(
+    () =>
+      [...rounds]
+        .filter((r) => r.is_finished)
+        .sort((a, b) => b.round_number - a.round_number),
+    [rounds],
+  );
 
   if (finishedRounds.length === 0) {
     return (
@@ -58,6 +115,13 @@ export function RoundHistory({
             const starter = round.started_by_player_id
               ? playerById.get(round.started_by_player_id)
               : undefined;
+            const running = cumulativeTeamTotalsAfterRound(
+              round.round_number,
+              rounds,
+              teams,
+              players,
+              scores,
+            );
 
             return (
               <Box
@@ -75,6 +139,28 @@ export function RoundHistory({
                   <Text fontSize="sm" color="gray.600" mb={2}>
                     {az.roundHistory.startedBy(starter.name)}
                   </Text>
+                )}
+
+                {running.length >= 2 && (
+                  <Box
+                    mb={3}
+                    px={3}
+                    py={2}
+                    borderRadius="md"
+                    bg="teal.50"
+                    borderWidth="1px"
+                    borderColor="teal.100"
+                  >
+                    <Text fontSize="xs" color="teal.700" textTransform="uppercase" mb={0.5}>
+                      {az.roundHistory.runningTotal}
+                    </Text>
+                    <Text fontWeight="bold" color="teal.800" fontSize={{ base: 'sm', md: 'md' }}>
+                      {running.map((t) => t.total).join(' vs ')}
+                    </Text>
+                    <Text fontSize="xs" color="teal.600">
+                      {running.map((t) => `${t.teamName}: ${t.total}`).join(' · ')}
+                    </Text>
+                  </Box>
                 )}
 
                 {roundScores.length > 0 && (

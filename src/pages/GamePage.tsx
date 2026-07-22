@@ -298,6 +298,7 @@ export function GamePage() {
           />
           <RoundHistory
             rounds={rounds}
+            teams={teams}
             players={players}
             scores={scores}
             penalties={penalties}

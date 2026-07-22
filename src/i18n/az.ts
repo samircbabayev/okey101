@@ -259,6 +259,7 @@ export const az = {
     startedBy: (name: string) => `Başlayan: ${name}`,
     scores: 'Xallar',
     penalties: 'CƏRİMƏLƏR',
+    runningTotal: 'Cəmi (raunda qədər)',
     penaltyExtra: (n: number) => `(+${n} cərimə)`,
     unknownPlayer: 'Naməlum',
   },

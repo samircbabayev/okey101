@@ -121,6 +121,29 @@ export async function fetchGames(): Promise<GameListItem[]> {
   });
 }
 
+async function fetchByIdsInChunks<T>(
+  table: string,
+  column: string,
+  ids: string[],
+): Promise<T[]> {
+  const CHUNK_SIZE = 80;
+  const results: T[] = [];
+
+  for (let i = 0; i < ids.length; i += CHUNK_SIZE) {
+    const chunk = ids.slice(i, i + CHUNK_SIZE);
+    const { data, error } = await supabase
+      .from(table)
+      .select('*')
+      .in(column, chunk)
+      .limit(10000);
+
+    if (error) throw error;
+    results.push(...((data ?? []) as T[]));
+  }
+
+  return results;
+}
+
 async function computeWinners(
   rows: GameWithRounds[],
 ): Promise<Map<string, WinnerInfo>> {
@@ -133,32 +156,16 @@ async function computeWinners(
     (r.rounds ?? []).map((rd) => rd.id),
   );
 
-  const [teamsRes, playersRes] = await Promise.all([
-    supabase.from('teams').select('*').in('game_id', finishedGameIds),
-    supabase.from('players').select('*').in('game_id', finishedGameIds),
+  const [allTeams, allPlayers, scores, penalties] = await Promise.all([
+    fetchByIdsInChunks<Team>('teams', 'game_id', finishedGameIds),
+    fetchByIdsInChunks<Player>('players', 'game_id', finishedGameIds),
+    finishedRoundIds.length > 0
+      ? fetchByIdsInChunks<Score>('scores', 'round_id', finishedRoundIds)
+      : Promise.resolve([] as Score[]),
+    finishedRoundIds.length > 0
+      ? fetchByIdsInChunks<Penalty>('penalties', 'round_id', finishedRoundIds)
+      : Promise.resolve([] as Penalty[]),
   ]);
-
-  if (teamsRes.error) throw teamsRes.error;
-  if (playersRes.error) throw playersRes.error;
-
-  let scores: Score[] = [];
-  let penalties: Penalty[] = [];
-
-  if (finishedRoundIds.length > 0) {
-    const [scoresRes, penaltiesRes] = await Promise.all([
-      supabase.from('scores').select('*').in('round_id', finishedRoundIds),
-      supabase.from('penalties').select('*').in('round_id', finishedRoundIds),
-    ]);
-
-    if (scoresRes.error) throw scoresRes.error;
-    if (penaltiesRes.error) throw penaltiesRes.error;
-
-    scores = (scoresRes.data ?? []) as Score[];
-    penalties = (penaltiesRes.data ?? []) as Penalty[];
-  }
-
-  const allTeams = (teamsRes.data ?? []) as Team[];
-  const allPlayers = (playersRes.data ?? []) as Player[];
 
   for (const row of finishedRows) {
     const gameTeams = allTeams.filter((t) => t.game_id === row.id);
@@ -195,6 +202,13 @@ async function computeWinners(
         isDraw: false,
       });
     } else if (isTiedGame(row, teamTotals)) {
+      // Avoid false draws when scores failed to load (all zeros, no score rows).
+      const hasScoreData = gameScores.length > 0;
+      const allZero =
+        teamTotals.length > 0 &&
+        teamTotals.every((t) => t.grandTotal === 0);
+      if (!hasScoreData && allZero) continue;
+
       winnerByGameId.set(row.id, {
         teamName: null,
         playerNames: [],
