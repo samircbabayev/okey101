@@ -87,17 +87,6 @@ export const az = {
     allDates: 'Hamısı',
     today: 'Bu gün',
     noGamesForDate: 'Bu aralıqda oyun yoxdur.',
-    deleteToday: 'Bugünkü oyunları sil',
-    deleteTodayTitle: 'Bugünkü oyunları sil',
-    deleteTodayBody:
-      'Bu gün yaradılmış bütün oyunlar (raundlar, xallar və cərimələr daxil) silinəcək. Geri qaytarmaq olmaz. Təsdiq üçün parolu daxil et.',
-    deletePasswordLabel: 'Parol',
-    deletePasswordPlaceholder: 'Parol',
-    deleteConfirm: 'Sil',
-    deleteWrongPassword: 'Parol yanlışdır',
-    deleteNoGames: 'Bu gün silinəcək oyun yoxdur',
-    deleteSuccess: (n: number) => `${n} oyun silindi`,
-    deleteFailed: 'Oyunlar silinmədi',
   },
 
   stats: {
