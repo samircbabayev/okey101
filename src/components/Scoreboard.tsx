@@ -1,7 +1,6 @@
 import {
   Badge,
   Box,
-  Button,
   Card,
   CardBody,
   CardHeader,
@@ -19,14 +18,12 @@ import {
   useDisclosure,
 } from '@chakra-ui/react';
 import { az } from '../i18n/az';
-import { GameStatus, type Game, type PlayerTotals, type TeamTotals } from '../types';
+import type { Game, PlayerTotals, TeamTotals } from '../types';
 import {
-  getLeadStatus,
   getWinMargin,
   isTiedGame,
   resolveWinningTeam,
 } from '../utils/scoreCalculations';
-import { isSpeechSupported, speak } from '../utils/speech';
 
 interface ScoreboardProps {
   playerTotals: PlayerTotals[];
@@ -76,19 +73,7 @@ function StatCell({
 export function Scoreboard({ playerTotals, teamTotals, game }: ScoreboardProps) {
   const winner = resolveWinningTeam(game, teamTotals);
   const draw = isTiedGame(game, teamTotals);
-  const lead = getLeadStatus(teamTotals);
-  const leadText = lead
-    ? lead.tie
-      ? az.scoreboard.leadTie
-      : az.scoreboard.leadBy(lead.leaderName, lead.margin)
-    : '';
   const { isOpen, onToggle } = useDisclosure({ defaultIsOpen: false });
-
-  const teamMembers = (teamId: string) =>
-    playerTotals
-      .filter((pt) => pt.teamId === teamId)
-      .map((pt) => pt.playerName)
-      .join(', ');
 
   const isGenericTeamName = (name: string) => /^Komanda \d+$/.test(name);
 
@@ -104,145 +89,55 @@ export function Scoreboard({ playerTotals, teamTotals, game }: ScoreboardProps) 
 
   return (
     <Stack spacing={6}>
-      <Card>
-        <CardHeader pb={2} px={{ base: 3, md: 6 }}>
-          <Heading size="md">{az.scoreboard.teamTotals}</Heading>
-        </CardHeader>
-        <CardBody pt={0} px={{ base: 3, md: 6 }} pb={{ base: 4, md: 6 }}>
-          <Stack spacing={2} display={{ base: 'flex', md: 'none' }}>
-            {teamTotals.map((tt) => (
+      {(winner || draw) && (
+        <Card borderWidth="0" shadow="sm" overflow="hidden">
+          <CardBody px={{ base: 3, md: 6 }} py={{ base: 3, md: 4 }}>
+            {winner && (
               <Box
-                key={tt.teamId}
-                display="flex"
-                justifyContent="space-between"
-                alignItems="center"
-                gap={2}
-                p={3}
+                p={4}
+                bg="green.50"
+                borderRadius="xl"
                 borderWidth="1px"
-                borderRadius="md"
+                borderColor="green.200"
               >
-                <Box minW={0}>
-                  <Text fontWeight="medium">{tt.teamName}</Text>
-                  {isGenericTeamName(tt.teamName) && teamMembers(tt.teamId) && (
-                    <Text fontSize="xs" color="gray.500">
-                      {teamMembers(tt.teamId)}
-                    </Text>
+                <Badge colorScheme="green" mb={1} borderRadius="full">
+                  {az.scoreboard.winner}
+                </Badge>
+                <Text fontWeight="bold" color="green.700" fontSize={{ base: 'sm', md: 'md' }}>
+                  {az.scoreboard.winnerPoints(
+                    winner.teamName,
+                    winnerPlayers,
+                    winner.grandTotal,
+                    winMargin,
                   )}
-                </Box>
-                <Text fontWeight="bold">{tt.grandTotal}</Text>
+                </Text>
+                <Text fontSize="sm" color="green.600">
+                  {game.winner_team_id
+                    ? az.scoreboard.winnerManual
+                    : az.scoreboard.lowestWins}
+                </Text>
               </Box>
-            ))}
-          </Stack>
+            )}
 
-          <Box overflowX="auto" display={{ base: 'none', md: 'block' }}>
-            <Table size="sm" variant="simple">
-              <Thead>
-                <Tr>
-                  <Th>{az.scoreboard.team}</Th>
-                  <Th isNumeric>{az.scoreboard.grandTotal}</Th>
-                </Tr>
-              </Thead>
-              <Tbody>
-                {teamTotals.map((tt) => (
-                  <Tr key={tt.teamId}>
-                    <Td>
-                      <Text fontWeight="medium">{tt.teamName}</Text>
-                      {isGenericTeamName(tt.teamName) && teamMembers(tt.teamId) && (
-                        <Text fontSize="xs" color="gray.500">
-                          {teamMembers(tt.teamId)}
-                        </Text>
-                      )}
-                    </Td>
-                    <Td isNumeric fontWeight="semibold">
-                      {tt.grandTotal}
-                    </Td>
-                  </Tr>
-                ))}
-              </Tbody>
-            </Table>
-          </Box>
-
-          {winner && (
-            <Box
-              mt={4}
-              p={4}
-              bg="green.50"
-              borderRadius="md"
-              borderWidth="1px"
-              borderColor="green.200"
-            >
-              <Badge colorScheme="green" mb={1}>
-                {az.scoreboard.winner}
-              </Badge>
-              <Text fontWeight="bold" color="green.700" fontSize={{ base: 'sm', md: 'md' }}>
-                {az.scoreboard.winnerPoints(
-                  winner.teamName,
-                  winnerPlayers,
-                  winner.grandTotal,
-                  winMargin,
-                )}
-              </Text>
-              <Text fontSize="sm" color="green.600">
-                {game.winner_team_id
-                  ? az.scoreboard.winnerManual
-                  : az.scoreboard.lowestWins}
-              </Text>
-            </Box>
-          )}
-
-          {draw && (
-            <Box
-              mt={4}
-              p={4}
-              bg="yellow.50"
-              borderRadius="md"
-              borderWidth="1px"
-              borderColor="yellow.300"
-            >
-              <Badge colorScheme="yellow" mb={1}>
-                {az.scoreboard.draw}
-              </Badge>
-              <Text fontSize="sm" color="yellow.800">
-                {az.scoreboard.drawHint}
-              </Text>
-            </Box>
-          )}
-
-          {game.status === GameStatus.Active && lead && (
-            <Flex
-              mt={4}
-              p={3}
-              bg="blue.50"
-              borderRadius="md"
-              borderWidth="1px"
-              borderColor="blue.200"
-              align="center"
-              justify="space-between"
-              gap={3}
-            >
-              <Text
-                fontWeight="semibold"
-                color="blue.800"
-                fontSize={{ base: 'sm', md: 'md' }}
+            {draw && (
+              <Box
+                p={4}
+                bg="yellow.50"
+                borderRadius="xl"
+                borderWidth="1px"
+                borderColor="yellow.300"
               >
-                {leadText}
-              </Text>
-              {isSpeechSupported() && (
-                <Button
-                  size="sm"
-                  colorScheme="blue"
-                  variant="ghost"
-                  flexShrink={0}
-                  aria-label={az.game.speak}
-                  onClick={() => speak(leadText)}
-                >
-                  🔊 {az.game.speak}
-                </Button>
-              )}
-            </Flex>
-          )}
-        </CardBody>
-      </Card>
+                <Badge colorScheme="yellow" mb={1} borderRadius="full">
+                  {az.scoreboard.draw}
+                </Badge>
+                <Text fontSize="sm" color="yellow.800">
+                  {az.scoreboard.drawHint}
+                </Text>
+              </Box>
+            )}
+          </CardBody>
+        </Card>
+      )}
 
       <Card>
         <CardHeader pb={{ base: isOpen ? 2 : 3, md: 2 }} px={{ base: 3, md: 6 }}>

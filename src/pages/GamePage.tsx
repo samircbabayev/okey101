@@ -159,18 +159,20 @@ export function GamePage() {
 
   return (
     <PageLayout>
-      <Stack spacing={6}>
-        <GameInfoCard game={game} teams={teams} players={players} rounds={rounds} />
+      <Stack spacing={4}>
+        <GameInfoCard game={game} rounds={rounds} teamTotals={teamTotals} />
 
         {showActiveRound && activeRound && (
           <Box
-            borderRadius="xl"
-            bgGradient="linear(to-r, blue.50, teal.50)"
+            borderRadius="2xl"
+            bg="white"
             borderWidth="1px"
-            borderColor="blue.200"
+            borderColor="teal.100"
             px={{ base: 3, md: 5 }}
             py={{ base: 3, md: 4 }}
             shadow="sm"
+            borderLeftWidth="4px"
+            borderLeftColor="teal.400"
           >
             <Flex align="center" justify="space-between" gap={3}>
               <Flex align="center" gap={3} minW={0}>
@@ -179,7 +181,7 @@ export function GamePage() {
                   justify="center"
                   boxSize={{ base: 10, md: 12 }}
                   borderRadius="full"
-                  bg="blue.500"
+                  bg="teal.500"
                   color="white"
                   fontWeight="bold"
                   fontSize={{ base: 'lg', md: 'xl' }}
@@ -192,6 +194,7 @@ export function GamePage() {
                     fontWeight="bold"
                     fontSize={{ base: 'md', md: 'lg' }}
                     color="gray.800"
+                    letterSpacing="-0.02em"
                     noOfLines={1}
                   >
                     {az.game.roundInProgress(activeRound.round_number)}
@@ -208,7 +211,7 @@ export function GamePage() {
                       <Button
                         size="xs"
                         variant="ghost"
-                        colorScheme="blue"
+                        colorScheme="teal"
                         minH="auto"
                         h="22px"
                         minW="22px"
@@ -227,8 +230,9 @@ export function GamePage() {
               {isSpeechSupported() && (
                 <Button
                   size="sm"
-                  colorScheme="blue"
+                  colorScheme="teal"
                   variant="solid"
+                  borderRadius="full"
                   flexShrink={0}
                   aria-label={az.game.speak}
                   onClick={() => speak(roundSpeech)}
@@ -241,23 +245,23 @@ export function GamePage() {
         )}
 
         {isActive && (
-          <SimpleGrid columns={{ base: 1, md: 3 }} spacing={3}>
+          <SimpleGrid columns={{ base: 1, sm: 3 }} spacing={2}>
             <Button
               colorScheme="orange"
-              variant="outline"
+              variant="solid"
               onClick={penaltyModal.onOpen}
               isDisabled={!activeRound}
-              size={{ base: 'sm', md: 'md' }}
+              size="md"
               w="full"
             >
               {az.game.addPenalty}
             </Button>
             <Button
-              colorScheme="purple"
-              variant="outline"
+              colorScheme="teal"
+              variant="solid"
               onClick={finishModal.onOpen}
               isDisabled={!activeRound}
-              size={{ base: 'sm', md: 'md' }}
+              size="md"
               w="full"
             >
               {az.game.finishRound}
@@ -266,7 +270,7 @@ export function GamePage() {
               colorScheme="red"
               variant="outline"
               onClick={openFinishGameDialog}
-              size={{ base: 'sm', md: 'md' }}
+              size="md"
               w="full"
             >
               {az.game.finishGame}
@@ -284,13 +288,13 @@ export function GamePage() {
         )}
 
         {game.status === GameStatus.Finished && (
-          <Alert status="success" borderRadius="md">
+          <Alert status="success" borderRadius="xl" variant="subtle">
             <AlertIcon />
             {az.game.gameFinished}
           </Alert>
         )}
 
-        <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6}>
+        <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={4}>
           <Scoreboard
             playerTotals={playerTotals}
             teamTotals={teamTotals}

@@ -48,6 +48,20 @@ const DEFAULT_PLAYERS: PlayerFormRow[] = [
   { name: 'Samir', teamNumber: 2, turnOrder: 4 },
 ];
 
+const TEAM_COLORS = [
+  { scheme: 'teal', border: 'teal.400', bg: 'teal.50', avatar: 'teal.500' },
+  { scheme: 'orange', border: 'orange.400', bg: 'orange.50', avatar: 'orange.500' },
+  { scheme: 'blue', border: 'blue.400', bg: 'blue.50', avatar: 'blue.500' },
+  { scheme: 'pink', border: 'pink.400', bg: 'pink.50', avatar: 'pink.500' },
+] as const;
+
+function playerInitials(name: string, fallbackIndex: number): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return String(fallbackIndex + 1);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+}
+
 export function CreateGamePage() {
   const navigate = useNavigate();
   const [name, setName] = useState('');
@@ -195,20 +209,17 @@ export function CreateGamePage() {
 
   return (
     <PageLayout title={az.createGame.title} subtitle={az.createGame.subtitle}>
-      <Card maxW="720px" mx="auto">
+      <Card maxW="720px" mx="auto" borderRadius="2xl" shadow="md" borderWidth="0" overflow="hidden">
+        <Box h="4px" bgGradient="linear(to-r, teal.400, teal.600, orange.300)" />
         <CardBody px={{ base: 3, md: 6 }} py={{ base: 4, md: 6 }}>
           <Box as="form" onSubmit={handleSubmit}>
             <Stack spacing={5}>
-              <Stack
-                direction={{ base: 'column', sm: 'row' }}
-                spacing={3}
-                align={{ base: 'stretch', sm: 'center' }}
-              >
+              <SimpleGrid columns={showLastGameButton ? 2 : 1} spacing={2}>
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="solid"
                   colorScheme="teal"
-                  w={{ base: 'full', sm: 'auto' }}
+                  size="sm"
                   onClick={fillDefaultData}
                 >
                   {az.createGame.fillDefault}
@@ -216,156 +227,230 @@ export function CreateGamePage() {
                 {showLastGameButton && (
                   <Button
                     type="button"
-                    variant="outline"
-                    colorScheme="blue"
-                    w={{ base: 'full', sm: 'auto' }}
+                    variant="solid"
+                    colorScheme="orange"
+                    size="sm"
                     onClick={fillLastGameData}
                   >
                     {az.createGame.fillLast}
                   </Button>
                 )}
-              </Stack>
-
-              <FormControl isRequired>
-                <FormLabel>{az.createGame.gameName}</FormLabel>
-                <Input
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder={az.createGame.gameNamePlaceholder}
-                />
-              </FormControl>
-
-              <SimpleGrid columns={{ base: 1, sm: 3 }} spacing={4}>
-                <FormControl isRequired>
-                  <FormLabel>{az.createGame.teamCount}</FormLabel>
-                  <Select
-                    value={teamCount}
-                    onChange={(e) => handleTeamCountChange(parseInt(e.target.value, 10))}
-                  >
-                    {[2, 3, 4].map((n) => (
-                      <option key={n} value={n}>
-                        {n}
-                      </option>
-                    ))}
-                  </Select>
-                </FormControl>
-
-                <FormControl isRequired>
-                  <FormLabel>{az.createGame.totalRounds}</FormLabel>
-                  <Input
-                    type="number"
-                    min={1}
-                    step={1}
-                    value={totalRounds}
-                    onChange={(e) => setTotalRounds(e.target.value)}
-                  />
-                </FormControl>
-
-                <FormControl isRequired>
-                  <FormLabel>{az.createGame.playerCount}</FormLabel>
-                  <Select
-                    value={playerCount}
-                    onChange={(e) => handlePlayerCountChange(parseInt(e.target.value, 10))}
-                  >
-                    {[2, 3, 4].map((n) => (
-                      <option key={n} value={n}>
-                        {n}
-                      </option>
-                    ))}
-                  </Select>
-                </FormControl>
               </SimpleGrid>
 
-              <Box>
-                <Text fontWeight="semibold" mb={3}>
-                  {az.createGame.players}
-                </Text>
-                <Stack spacing={3}>
-                  {players.map((player, index) => (
-                    <Box
-                      key={index}
-                      p={4}
-                      borderWidth="1px"
-                      borderRadius="md"
-                      bg="gray.50"
+              <Box
+                p={3}
+                borderRadius="xl"
+                bg="teal.50"
+                borderWidth="1px"
+                borderColor="teal.100"
+              >
+                <SimpleGrid columns={2} spacing={3}>
+                  <FormControl isRequired>
+                    <FormLabel>{az.createGame.gameName}</FormLabel>
+                    <Input
+                      bg="white"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder={az.createGame.gameNamePlaceholder}
+                    />
+                  </FormControl>
+
+                  <FormControl isRequired>
+                    <FormLabel>{az.createGame.teamCount}</FormLabel>
+                    <Select
+                      bg="white"
+                      value={teamCount}
+                      onChange={(e) => handleTeamCountChange(parseInt(e.target.value, 10))}
                     >
-                      <Flex justify="space-between" align="center" mb={3} gap={2} flexWrap="wrap">
-                        <Text fontSize="sm" fontWeight="medium">
-                          {az.createGame.player(index + 1)}
-                        </Text>
-                        {player.turnOrder === 1 ? (
-                          <Badge colorScheme="teal">{az.createGame.startsFirst}</Badge>
-                        ) : (
-                          <Button
-                            type="button"
-                            size="xs"
-                            variant="outline"
-                            colorScheme="teal"
-                            onClick={() => setPlayerStartFirst(index)}
-                          >
-                            {az.createGame.startFirst}
-                          </Button>
-                        )}
-                      </Flex>
-                      <SimpleGrid columns={{ base: 1, sm: 3 }} spacing={3}>
-                        <FormControl isRequired>
-                          <FormLabel fontSize="sm">{az.createGame.name}</FormLabel>
-                          <Input
-                            size="sm"
-                            value={player.name}
-                            onChange={(e) =>
-                              updatePlayer(index, { name: e.target.value })
-                            }
-                            placeholder={az.createGame.player(index + 1)}
-                          />
-                        </FormControl>
+                      {[2, 3, 4].map((n) => (
+                        <option key={n} value={n}>
+                          {n}
+                        </option>
+                      ))}
+                    </Select>
+                  </FormControl>
 
-                        <FormControl isRequired>
-                          <FormLabel fontSize="sm">{az.scoreboard.team}</FormLabel>
-                          <Select
-                            size="sm"
-                            value={player.teamNumber}
-                            onChange={(e) =>
-                              updatePlayer(index, {
-                                teamNumber: parseInt(e.target.value, 10),
-                              })
-                            }
-                          >
-                            {teamOptions.map((n) => (
-                              <option key={n} value={n}>
-                                {az.common.team(n)}
-                              </option>
-                            ))}
-                          </Select>
-                        </FormControl>
+                  <FormControl isRequired>
+                    <FormLabel>{az.createGame.totalRounds}</FormLabel>
+                    <Input
+                      bg="white"
+                      type="number"
+                      min={1}
+                      step={1}
+                      value={totalRounds}
+                      onChange={(e) => setTotalRounds(e.target.value)}
+                    />
+                  </FormControl>
 
-                        <FormControl isRequired>
-                          <FormLabel fontSize="sm">{az.createGame.turnOrder}</FormLabel>
-                          <Select
-                            size="sm"
-                            value={player.turnOrder}
-                            onChange={(e) =>
-                              updatePlayer(index, {
-                                turnOrder: parseInt(e.target.value, 10),
-                              })
-                            }
-                          >
-                            {players.map((_, i) => (
-                              <option key={i + 1} value={i + 1}>
-                                {i + 1}
-                              </option>
-                            ))}
-                          </Select>
-                        </FormControl>
-                      </SimpleGrid>
-                    </Box>
-                  ))}
+                  <FormControl isRequired>
+                    <FormLabel>{az.createGame.playerCount}</FormLabel>
+                    <Select
+                      bg="white"
+                      value={playerCount}
+                      onChange={(e) => handlePlayerCountChange(parseInt(e.target.value, 10))}
+                    >
+                      {[2, 3, 4].map((n) => (
+                        <option key={n} value={n}>
+                          {n}
+                        </option>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </SimpleGrid>
+              </Box>
+
+              <Box>
+                <Flex align="center" justify="space-between" mb={3}>
+                  <Text fontWeight="bold" fontSize="md" letterSpacing="-0.02em">
+                    {az.createGame.players}
+                  </Text>
+                  <Badge colorScheme="teal" variant="subtle" borderRadius="full" px={2}>
+                    {players.length}
+                  </Badge>
+                </Flex>
+                <Stack spacing={3}>
+                  {players.map((player, index) => {
+                    const color =
+                      TEAM_COLORS[(player.teamNumber - 1) % TEAM_COLORS.length];
+                    const isFirst = player.turnOrder === 1;
+
+                    return (
+                      <Box
+                        key={index}
+                        p={3}
+                        borderWidth="1px"
+                        borderRadius="xl"
+                        bg="white"
+                        borderColor="gray.200"
+                        borderLeftWidth="4px"
+                        borderLeftColor={color.border}
+                        shadow="sm"
+                      >
+                        <Flex justify="space-between" align="center" mb={3} gap={2}>
+                          <Flex align="center" gap={2} minW={0}>
+                            <Flex
+                              align="center"
+                              justify="center"
+                              boxSize="36px"
+                              borderRadius="full"
+                              bg={color.avatar}
+                              color="white"
+                              fontSize="xs"
+                              fontWeight="bold"
+                              flexShrink={0}
+                            >
+                              {playerInitials(player.name, index)}
+                            </Flex>
+                            <Box minW={0}>
+                              <Text
+                                fontSize="sm"
+                                fontWeight="bold"
+                                color="gray.800"
+                                noOfLines={1}
+                              >
+                                {player.name.trim() || az.createGame.player(index + 1)}
+                              </Text>
+                              <Text fontSize="xs" color={`${color.scheme}.600`}>
+                                {az.common.team(player.teamNumber)} · #{player.turnOrder}
+                              </Text>
+                            </Box>
+                          </Flex>
+                          {isFirst ? (
+                            <Badge
+                              colorScheme="teal"
+                              borderRadius="full"
+                              px={2}
+                              py={1}
+                              flexShrink={0}
+                            >
+                              {az.createGame.startsFirst}
+                            </Badge>
+                          ) : (
+                            <Button
+                              type="button"
+                              size="xs"
+                              variant="outline"
+                              colorScheme="teal"
+                              borderRadius="full"
+                              onClick={() => setPlayerStartFirst(index)}
+                              flexShrink={0}
+                            >
+                              {az.createGame.startFirst}
+                            </Button>
+                          )}
+                        </Flex>
+                        <SimpleGrid columns={2} spacing={2}>
+                          <FormControl isRequired gridColumn="1 / -1">
+                            <FormLabel fontSize="xs" mb={1}>
+                              {az.createGame.name}
+                            </FormLabel>
+                            <Input
+                              size="sm"
+                              bg={color.bg}
+                              borderColor={`${color.scheme}.100`}
+                              value={player.name}
+                              onChange={(e) =>
+                                updatePlayer(index, { name: e.target.value })
+                              }
+                              placeholder={az.createGame.player(index + 1)}
+                            />
+                          </FormControl>
+
+                          <FormControl isRequired>
+                            <FormLabel fontSize="xs" mb={1}>
+                              {az.scoreboard.team}
+                            </FormLabel>
+                            <Select
+                              size="sm"
+                              bg={color.bg}
+                              borderColor={`${color.scheme}.100`}
+                              value={player.teamNumber}
+                              onChange={(e) =>
+                                updatePlayer(index, {
+                                  teamNumber: parseInt(e.target.value, 10),
+                                })
+                              }
+                            >
+                              {teamOptions.map((n) => (
+                                <option key={n} value={n}>
+                                  {az.common.team(n)}
+                                </option>
+                              ))}
+                            </Select>
+                          </FormControl>
+
+                          <FormControl isRequired>
+                            <FormLabel fontSize="xs" mb={1}>
+                              {az.createGame.turnOrder}
+                            </FormLabel>
+                            <Select
+                              size="sm"
+                              bg={color.bg}
+                              borderColor={`${color.scheme}.100`}
+                              value={player.turnOrder}
+                              onChange={(e) =>
+                                updatePlayer(index, {
+                                  turnOrder: parseInt(e.target.value, 10),
+                                })
+                              }
+                            >
+                              {players.map((_, i) => (
+                                <option key={i + 1} value={i + 1}>
+                                  {i + 1}
+                                </option>
+                              ))}
+                            </Select>
+                          </FormControl>
+                        </SimpleGrid>
+                      </Box>
+                    );
+                  })}
                 </Stack>
               </Box>
 
               {error && (
                 <FormControl isInvalid>
-                  <Alert status="error" borderRadius="md">
+                  <Alert status="error" borderRadius="xl">
                     <AlertIcon />
                     <FormErrorMessage m={0}>{error}</FormErrorMessage>
                   </Alert>
@@ -377,6 +462,8 @@ export function CreateGamePage() {
                 colorScheme="teal"
                 size="lg"
                 w="full"
+                borderRadius="xl"
+                shadow="md"
                 isLoading={submitting}
               >
                 {az.createGame.create}

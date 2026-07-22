@@ -43,11 +43,16 @@ export function ActiveRoundPenalties({
   const roundTotal = roundPenalties.reduce((sum, p) => sum + p.penalty_value, 0);
 
   return (
-    <Card borderColor="orange.200" borderWidth="1px">
-      <CardHeader pb={2} px={{ base: 3, md: 6 }}>
+    <Card borderWidth="0" shadow="sm" overflow="hidden">
+      <Box h="3px" bg="orange.400" />
+      <CardHeader pb={2} px={{ base: 3, md: 6 }} pt={4}>
         <Flex justify="space-between" align="center" gap={2} flexWrap="wrap">
-          <Heading size="md">{az.activeRoundPenalties.title}</Heading>
-          <Badge colorScheme="orange">{az.roundHistory.round(roundNumber)}</Badge>
+          <Heading size="sm" letterSpacing="-0.02em">
+            {az.activeRoundPenalties.title}
+          </Heading>
+          <Badge colorScheme="orange" borderRadius="full">
+            {az.roundHistory.round(roundNumber)}
+          </Badge>
         </Flex>
       </CardHeader>
       <CardBody pt={0} px={{ base: 3, md: 6 }} pb={{ base: 4, md: 6 }}>
